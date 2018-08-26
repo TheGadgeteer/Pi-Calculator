@@ -54,6 +54,7 @@ public:
 
 	Exponent(int val=0);
 	Exponent(const Exponent& e);
+	Exponent(Exponent&& e);
 	~Exponent() { delete[] mExp; printf("Destructed Exponent %p\n", this);}
 
 	Exponent& operator=(int val);
@@ -81,6 +82,7 @@ private:
 public:
 	Mantisse(double val=0.);
 	Mantisse(const Mantisse& m);
+	Mantisse(Mantisse&& m);
 	~Mantisse() { delete[] mMantisse; printf("Destructed Mantisse %p\n", this);}
 
 	Mantisse& operator=(double val);
