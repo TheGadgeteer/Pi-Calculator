@@ -115,25 +115,23 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(Mantisse&
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double val) {
 	const double powerof2 = (double) (1 << 8);
-	double temp = powerof2 / 2.;
-	printf("%f:\t", val);
+	val /= 2.;
 	for (int i = 0; i < M; ++i) {
-		mMantisse[i] = (char)(val * temp);
-		printf("%f - %d\t", val * temp, mMantisse[i]);
-		temp -= mMantisse[i];
-		temp *= powerof2;
+		val *= powerof2;
+		mMantisse[i] = (char)(val);
+		val -= mMantisse[i];
 	}
 }
 
 template <int M, int E>
 double BigFloat<M, E>::Mantisse::getVal() {
 	const double powerof2 = (double) (1 << 8);
-	double temp = powerof2 / 2.;
-	double val = (double)mMantisse[0] / temp;
-	for (int i = 1; i < M; ++i) {
-		temp *= powerof2;
-		val += (double)mMantisse[i] / temp;
+	double val = (double)mMantisse[M - 1];
+	for (int i = M - 2; i >= 0; --i) {
+		val /= powerof2;
+		val += (double)mMantisse[i];
 	}
+	val /= powerof2 / 2.;
 	return val;
 }
 
@@ -222,7 +220,7 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 	}
 	mMantisse = d;
 	mExp = exp;
-	printf("%d * %f *2^%d \t\t %f *2^%d\n", mSgn, d, exp, mMantisse.getVal(), mExp.getVal());
+	return *this;
 }
 
 template <int M, int E>
@@ -328,7 +326,7 @@ int main() {
 	printf("BigFloat<> c  = -a\n");
 	BigFloat<> c = -a;
 //	printf("smaller: %d, equal: %d\n", a < b, a == b);
-//	printf("%s\n", a.toString().c_str());
-//	printf("%s\n", b.toString().c_str());
+	printf("%s\n", a.toString().c_str());
+	printf("%s\n", b.toString().c_str());
 	return 0;
 }
