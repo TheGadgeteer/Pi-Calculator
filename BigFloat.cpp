@@ -6,7 +6,7 @@
 template <int M, int E>
 BigFloat<M, E>::Exponent::Exponent(int val) {
 	printf("Constructor of Exponent %p was called\n", this);
-	mExp = new unsigned char[E];
+	mExp = new u_char[E];
 	*this = val;
 }
 
@@ -15,7 +15,7 @@ template <int M, int E>
 BigFloat<M, E>::Exponent::Exponent(const Exponent& e) 
 {
 	printf("Copying Exponent %p in new object %p\n", &e, this);
-	mExp = new unsigned char[E];
+	mExp = new u_char[E];
 	memcpy(mExp, e.mExp, E);
 }
 
@@ -83,7 +83,7 @@ bool BigFloat<M, E>::Exponent::operator==(const Exponent& e) const {
 }
 
 template <int M, int E>
-int BigFloat<M, E>::Exponent::getVal() {
+int BigFloat<M, E>::Exponent::getVal() const {
 	int val = 0;
 	for (int i = 0; i < E; ++i) {
 		val |= ((unsigned int)mExp[E - 1 - i] << i * 8);
@@ -94,7 +94,7 @@ int BigFloat<M, E>::Exponent::getVal() {
 template <int M, int E>
 BigFloat<M, E>::Mantisse::Mantisse(double val) {
 	printf("Constructor of Mantisse %p was called\n", this);
-	mMantisse = new unsigned char[M];
+	mMantisse = new u_char[M];
 	*this = val;
 }
 
@@ -102,7 +102,7 @@ BigFloat<M, E>::Mantisse::Mantisse(double val) {
 template <int M, int E>
 BigFloat<M, E>::Mantisse::Mantisse(const Mantisse& m) {
 	printf("Copying Mantisse %p into new Object %p\n", &m, this);
-	mMantisse = new unsigned char[M];
+	mMantisse = new u_char[M];
 	memcpy(mMantisse, m.mMantisse, M);
 }
 
@@ -131,9 +131,95 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(Mantisse&
 		return *this;
 }
 
+
+template <int M, int E>
+typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator>>=(int shift)
+{
+	if (shift < 0)
+		return operator<<=(-shift);
+
+	//clear the bits that will be overwritten
+	int i = M - 1, remaining = shift;
+	while (remaining >= 8) {
+		remaining -= 8;
+		mMantisse[i--] = 0;
+	}
+	mMantisse[i] &= (0xff << remaining);
+
+	for (int i = M * 8 - 1 - shift; i >= 0; --i) {
+		int newPos = i + shift;
+		int newChar = newPos / 8, oldChar = i / 8;
+		int posInChar = newPos % 8, oldPos = i % 8;
+		bool isSet = (mMantisse[oldChar] & (1 << oldPos)) > 0;
+		if (isSet)
+			mMantisse[newChar] |= (1 << posInChar);   //set Bit eventually
+	}
+
+	//clear the last bits
+	i = 0; remaining = shift;
+	while (remaining >= 8) {
+		remaining -= 8;
+		mMantisse[i++] = 0;
+	}
+	mMantisse[i] &= (0xff >> remaining);
+
+
+	for (int i = 0; i < M; ++i)
+		printf("%hhx ", mMantisse[i]);
+	printf("\n");
+	return *this;
+	return *this;
+}
+
+
+template <int M, int E>
+typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shift)
+{
+	shift = -8;
+	printf("bitshift test %d\n", shift);
+	for (int i = 0; i < M; ++i)
+		printf("%hhx ", mMantisse[i]);
+	printf("\n");
+	if (shift < 0)
+		return operator>>=(-shift);
+
+
+	//clear the bits that will be overwritten
+	int i = 0, remaining = shift;
+	while (remaining >= 8) {
+		remaining -= 8;
+		mMantisse[i++] = 0;
+	}
+	mMantisse[i] &= (0xff >> remaining);
+	
+	for (int i = shift; i < M * 8 - shift; ++i) {
+		int newPos = i - shift;
+		int newChar = newPos / 8, oldChar = i / 8;
+		int posInChar = newPos % 8, oldPos = i % 8;
+		bool isSet = (mMantisse[oldChar] & (1 << oldPos)) > 0;
+		if (isSet)
+			mMantisse[newChar] |= (1 << posInChar);   //set Bit eventually
+	}
+
+	//clear the last bits
+	i = M - 1; remaining = shift;
+	while (remaining >= 8) {
+		remaining -= 8;
+		mMantisse[i--] = 0;
+	}
+	mMantisse[i] &= (0xff << remaining);
+
+
+	for (int i = 0; i < M; ++i)
+		printf("%hhx ", mMantisse[i]);
+	printf("\n");
+	return *this;
+}
+
 //Value is assumed to be between 0 and 2
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double val) {
+	double save = val;
 	const double powerof2 = (double) (1 << 8);
 	val /= 2.;
 	for (int i = 0; i < M; ++i) {
@@ -141,6 +227,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double va
 		mMantisse[i] = (char)(val);
 		val -= mMantisse[i];
 	}
+
 	return *this;
 }
 
@@ -202,7 +289,7 @@ BigFloat<M, E>::BigFloat(BigFloat<M, E>&& b) :
 	printf("Moved %p into new object %p\n", &b, this);
 }
 
-// Copy operator
+// BigFloat -Copy operator
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(const BigFloat<M, E>& b) {
 	printf("Copying %p to %p\n", &b, this);
@@ -212,7 +299,7 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(const BigFloat<M, E>& b) {
 	return *this;
 }
 
-// Move operator
+// BigFloat - Move operator
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
 	printf("Moving %p to %p\n", &b, this);
@@ -221,15 +308,42 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
 	mSgn = b.mSgn;
 }
 
+// a primitive attempt to convert the BigFloat into a String.
+// Maximum ten digits before the floating point.
 template <int M, int E>
-std::string BigFloat<M, E>::toString() {
+std::string BigFloat<M, E>::toString(int maxLen) {
+	int exp = mExp.getVal();
+	std::string s = "";
+	if (mSgn < 0)
+		s += '-';
 	//TODO
-	std::string s = "Sign: " ;
-	s += std::to_string(mSgn);
-	s += " * ";
-	s+= std::to_string(mMantisse.getVal());
-	s += " * 2 ^ ";
-	s += std::to_string(mExp.getVal());
+	//first, convert part in front of the floating point
+	int numBits = 1 + exp;
+	if (numBits > 64)
+		numBits = 64;
+
+	if (numBits <= 0){
+		s += '0';
+	} else {
+		unsigned long long n = 0;
+		n = mMantisse[0];
+		numBits -= 8;
+		int i = 1;
+		while (numBits > 0) {
+			n <<= 8;
+			n |= mMantisse[i];
+			++i;
+			numBits -= 8;
+		}
+		n >>= -numBits;
+
+
+		s += std::to_string(n);
+	}
+	//then the part after the dot
+	s += ".";
+	//TODO
+	s += "xxxx";
 	return s;
 }
 
@@ -238,6 +352,7 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 	int exp = 0;
 	mSgn = d >= 0 ? 1 : -1;
 	d *= mSgn; //get absolute
+	 //shift bits until d = 1.xxx
 	while (d < 1 && exp > Exponent::MIN) {
 		d *= 2.;
 		exp -= 1;
@@ -248,13 +363,20 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 	}
 	mMantisse = d;
 	mExp = exp;
+
+	for (int x = 0; x < M; ++x) {
+		for (int i = 0; i < 8; ++i) {
+			printf("%i", (mMantisse[x] & (1 << (7 - i))) > 0);
+		}
+		printf(" ");
+	}
+	printf("\texp: %d\n", exp);
 	return *this;
 }
 
 template <int M, int E>
 BigFloat<M, E> BigFloat<M, E>::operator-() const {
 	BigFloat b(*this);
-	printf("setting sign..\n");
 	b.setSign(-mSgn);
 	return b;
 }
@@ -289,22 +411,25 @@ BigFloat<M, E> BigFloat<M, E>::operator/ (const BigFloat<M, E>& b) const {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator+= (const BigFloat<M, E>& b) {
-
+	int exp1 = mExp.getVal();
+	int exp2 = b.mExp.getVal();
+	mMantisse <<= 4;
+	return *this;
 }
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator-= (const BigFloat<M, E>& b) {
-
+	//TODO
 }
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
-
+	//TODO
 }
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator/= (const BigFloat<M, E>& b) {
-
+	//TODO
 }
 
 template <int M, int E>
@@ -341,6 +466,23 @@ BigFloat<M, E> BigFloat<M, E>::abs() const {
 	return b;
 }
 
+template<int M, int E>
+double BigFloat<M, E>::getDouble()
+{
+	double d = mSgn * mMantisse.getVal();
+	int exp = mExp.getVal();
+	while (exp > 0) {
+			d *= 2.;
+			--exp;
+	}
+	while (exp < 0) {
+		d /= 2.;
+		++exp;
+	}
+	return d;
+			
+}
+
 //set to 1 or -1
 template <int M, int E>
 void BigFloat<M, E>::setSign(int sgn) {
@@ -349,14 +491,19 @@ void BigFloat<M, E>::setSign(int sgn) {
 }
 
 int main() {
-	BigFloat<> a(0.2432342);
-	//BigFloat<> b(-2.22222);
-	//BigFloat<> t(3.);
-	printf("BigFloat<> c  = -a\n");
-	BigFloat<> c = -a;
+	//BigFloat<> a(0.2432342);
+	BigFloat<> b(30201516.45462);
+	//b += b;
+	//BigFloat<> t(-304234);
+	//printf("BigFloat<> c  = -a\n");
+	//BigFloat<> c = -a;
 //	printf("smaller: %d, equal: %d\n", a < b, a == b);
-	printf("%s\n", a.toString().c_str());
-	//printf("%s\n", b.toString().c_str());
+	//printf("%s, %f\n", a.toString().c_str(), a.getDouble());
+	printf("%s, %f\n", b.toString().c_str(), b.getDouble());
+	//printf("%s, %f\n", t.toString().c_str(), t.getDouble());
+	//printf("%s, %f\n", c.toString().c_str(), c.getDouble());
 	
+	
+
 	return 0;
 }

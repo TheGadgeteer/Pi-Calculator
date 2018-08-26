@@ -1,7 +1,9 @@
 // Float type with Exponent Bias Shift, Normalized Mantisse. The leading 1 is kept. Saved in Big Endian.
 #include <string.h>
 
-template <int M=4, int E=2>
+typedef unsigned char u_char;
+
+template <int M=10, int E=2>
 class BigFloat {
 private:
 
@@ -19,7 +21,7 @@ public:
 	BigFloat(BigFloat<M, E>&& b);
 	~BigFloat();
 
-	std::string toString();
+	std::string toString(int maxLen = 100);
 	BigFloat<M, E>& operator= (double d);
 	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator= (BigFloat<M, E>&& b);
@@ -40,13 +42,14 @@ public:
 	bool operator>= (const BigFloat<M, E>& b) const { return (operator>(b) || operator==(b));}
 	bool absGreaterThan (const BigFloat<M, E>& b) const;
 	BigFloat<M, E> abs() const;
+	double getDouble();
 
 };
 
 template <int M, int E>
 class BigFloat<M, E>::Exponent {
 private:
-	unsigned char *mExp;
+	u_char *mExp;
 	static const unsigned int mBias = (1 << (E * 8 - 1)) - 1;
 public:
 	static const int MAX = mBias;
@@ -71,14 +74,14 @@ public:
 	bool operator<=(const Exponent& e) const {return *this < e || *this == e;}
 	bool operator>=(const Exponent& e) const {return *this > e || *this == e;}
 
-	int getVal();
+	int getVal() const;
 };
 
 // Only takes Values in [0, 2). Stored in Big Endian. Format:  x.xxxxx
 template <int M, int E>
 class BigFloat<M, E>::Mantisse{
 private:
-	unsigned char *mMantisse;
+	u_char *mMantisse;
 public:
 	Mantisse(double val=0.);
 	Mantisse(const Mantisse& m);
@@ -88,12 +91,15 @@ public:
 	Mantisse& operator=(double val);
 	Mantisse& operator=(const Mantisse& m);
 	Mantisse& operator=(Mantisse&& m);
+	Mantisse& operator>>=(int shift);
+	Mantisse& operator<<=(int shift);
 	bool operator<(const Mantisse& e) const;
 	bool operator>(const Mantisse& e) const {return e < *this;}
 	bool operator==(const Mantisse& e) const;
 	bool operator!=(const Mantisse& e) const {return !(*this == e);}
 	bool operator<=(const Mantisse& e) const {return *this < e || *this == e;}
 	bool operator>=(const Mantisse& e) const {return *this > e || *this == e;}
+	u_char& operator[](std::size_t idx) { return mMantisse[idx]; }
 
 	double getVal();
 };
