@@ -16,15 +16,18 @@ private:
 	int getSign() const;
 public:
 	BigFloat(double init=0.);
-	BigFloat(const BigFloat<M, E>& b);
+	BigFloat(const BigFloat<M, E>& b) {operator=(b);}
+	BigFloat(BigFloat<M, E>&& b) {operator=(b);}
 	~BigFloat();
-	std::string& toString();
+	std::string toString();
 	BigFloat<M, E>& operator= (double d);
-	BigFloat<M, E>& operator- () const;
-	BigFloat<M, E>& operator+ (const BigFloat<M, E>& b) const;
-	BigFloat<M, E>& operator- (const BigFloat<M, E>& b) const;
-	BigFloat<M, E>& operator* (const BigFloat<M, E>& b) const;
-	BigFloat<M, E>& operator/ (const BigFloat<M, E>& b) const;
+	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
+	BigFloat<M, E>& operator= (BigFloat<M, E>&& b);
+	BigFloat<M, E> operator- () const;
+	BigFloat<M, E> operator+ (const BigFloat<M, E>& b) const;
+	BigFloat<M, E> operator- (const BigFloat<M, E>& b) const;
+	BigFloat<M, E> operator* (const BigFloat<M, E>& b) const;
+	BigFloat<M, E> operator/ (const BigFloat<M, E>& b) const;
 	BigFloat<M, E>& operator+= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator-= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator*= (const BigFloat<M, E>& b);
@@ -36,7 +39,7 @@ public:
 	bool operator<= (const BigFloat<M, E>& b) const { return (operator<(b) || operator==(b));}
 	bool operator>= (const BigFloat<M, E>& b) const { return (operator>(b) || operator==(b));}
 	bool absGreaterThan (const BigFloat<M, E>& b) const;
-	BigFloat<M, E>& abs() const;
+	BigFloat<M, E> abs() const;
 
 };
 
@@ -50,10 +53,13 @@ public:
 	static const int MIN = -mBias;
 
 	Exponent(int val=0);
-	Exponent(const Exponent& e);
+	Exponent(const Exponent& e) {operator=(e);}
+	Exponent(Exponent&& e) {operator=(e);}
 	~Exponent() { delete mExp; }
 
 	Exponent& operator=(int val);
+	Exponent& operator=(const Exponent& e);
+	Exponent& operator=(Exponent&& e);
 	Exponent& operator+=(int i);
 	Exponent& operator+=(const Exponent& e) { *this += e.getVal(); }
 	Exponent& operator-=(int i);
@@ -75,10 +81,13 @@ private:
 	char *mMantisse;
 public:
 	Mantisse(double val=0.);
-	Mantisse(const Mantisse& e);
+	Mantisse(const Mantisse& m) {operator=(m);}
+	Mantisse(Mantisse&& m) {operator=(m);}
 	~Mantisse() { delete mMantisse; }
 
 	Mantisse& operator=(double val);
+	Mantisse& operator=(const Mantisse& m);
+	Mantisse& operator=(Mantisse&& m);
 	bool operator<(const Mantisse& e) const;
 	bool operator>(const Mantisse& e) const {return e < *this;}
 	bool operator==(const Mantisse& e) const;
