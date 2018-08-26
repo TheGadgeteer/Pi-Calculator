@@ -43,6 +43,7 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(int val) 
 	for (int i = 0; i < E; ++i) {
 		mExp[E - i - 1] = (char)(val >> i*8);
 	}
+	return *this;
 }
 
 template <int M, int E>
@@ -121,6 +122,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double va
 		mMantisse[i] = (char)(val);
 		val -= mMantisse[i];
 	}
+	return *this;
 }
 
 template <int M, int E>
@@ -172,6 +174,14 @@ template <int M, int E>
 BigFloat<M, E>::BigFloat(const BigFloat<M, E>& b) :
 	mExp(b.mExp), mMantisse(b.mMantisse), mSgn(b.mSgn) {
 		printf("Copied %p into new object %p\n", &b, this);
+}
+
+// Move constructor
+template<int M, int E>
+BigFloat<M, E>::BigFloat(BigFloat<M, E>&& b) :
+	mExp(b.mExp), mMantisse(b.mMantisse), mSgn(b.mSgn) {
+	printf("Moved %p into new object %p\n", &b, this);
+	b.~BigFloat();
 }
 
 // Copy operator

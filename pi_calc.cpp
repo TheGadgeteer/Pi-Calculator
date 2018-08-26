@@ -25,7 +25,7 @@ int findDiff(char* str1, char* str2) {
 	return i;
 }
 
-int main(int argc, char** argv) {
+int _main(int argc, char** argv) {
 	int curAccuracy = 0, maxAccuracy = 0xffffff;
 	BigFloat pi(0), x;
 	char *last_pi_str = new char[1000], *pi_str = new char[1000];
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 		val *= -1;
 
 		swapPointers(&last_pi_str, &pi_str);
-		sprintf(pi_str, "%f", pi);
+		sprintf_s(pi_str, 999, "%f", pi);
 		curAccuracy = findDiff(last_pi_str, pi_str);
 		printf("\r%s, \t Accuracy: %d decimals", pi_str, curAccuracy);
 	}

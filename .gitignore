@@ -1,3 +1,4 @@
 .vs/*
 *.out
-"Pi Calculator/*"
+*.vcxproj
+Pi Calculator/

@@ -13,7 +13,6 @@ private:
 	Mantisse mMantisse;
 
 	void setSign(int sgn);
-	int getSign() const;
 public:
 	BigFloat(double init=0.);
 	BigFloat(const BigFloat<M, E>& b);
@@ -48,10 +47,10 @@ template <int M, int E>
 class BigFloat<M, E>::Exponent {
 private:
 	unsigned char *mExp;
-	static const unsigned int mBias = 1 << (E * 8 - 1) - 1;
+	static const unsigned int mBias = (1 << (E * 8 - 1)) - 1;
 public:
 	static const int MAX = mBias;
-	static const int MIN = -mBias;
+	static const int MIN = -(int)mBias;
 
 	Exponent(int val=0);
 	Exponent(const Exponent& e);
