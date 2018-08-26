@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string>
 #include <string.h>
 #include "BigFloat.h"
 
@@ -35,6 +36,23 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator-=(int i) {
 }
 
 template <int M, int E>
+bool BigFloat<M, E>::Exponent::operator<(const Exponent& e) const {
+	for (int i = 0; i < E; ++i) {
+		if (mExp[i] < e.mExp[i])
+			return true;
+	}
+	return false;
+}
+
+template <int M, int E>
+bool BigFloat<M, E>::Exponent::operator==(const Exponent& e) const {
+	for (int i = E - 1; i >= 0; --i)
+		if (mExp[i] != e.mExp[i])
+			return false;
+	return true;
+}
+
+template <int M, int E>
 int BigFloat<M, E>::Exponent::getVal() {
 	int val = 0;
 	for (int i = 0; i < E; ++i) {
@@ -43,6 +61,65 @@ int BigFloat<M, E>::Exponent::getVal() {
 	}
 	return val - mBias;
 }
+
+
+
+
+template <int M, int E>
+BigFloat<M, E>::Mantisse::Mantisse(double val) {
+	printf("Constructor of Mantisse %p was called\n", this);
+	mMantisse = new char[M];
+	*this = val;
+}
+
+template <int M, int E>
+BigFloat<M, E>::Mantisse::Mantisse(const Mantisse& m) {
+	printf("Copy Constructor of Mantisse %p was called\n", this);
+	mMantisse = new char[M];
+	memcpy(mMantisse, m.mMantisse, M);
+}
+
+//Value is assumed to be between 0 and 2
+template <int M, int E>
+typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double val) {
+	const double powerof2 = (double) (1 << 8);
+	double temp = powerof2 * 2.;
+	for (int i = 0; i < M; ++i) {
+		mMantisse[i] = (char)(val * temp);
+		temp *= powerof2;
+	}
+}
+
+template <int M, int E>
+bool BigFloat<M, E>::Mantisse::operator<(const Mantisse& m) const {
+	for (int i = 0; i < M; ++i) {
+		if (mMantisse[i] < m.mMantisse[i])
+			return true;
+	}
+	return false;
+}
+
+template <int M, int E>
+bool BigFloat<M, E>::Mantisse::operator==(const Mantisse& m) const {
+	for (int i = 0; i < M; ++i)
+		if (mMantisse[i] != m.mMantisse[i])
+			return false;
+	return true;
+}
+
+template <int M, int E>
+double BigFloat<M, E>::Mantisse::getVal() {
+	const double powerof2= (double) (1 << 8);
+	double temp = powerof2 * 2.;
+	double val = (double)mMantisse[0] / temp;
+	for (int i = 1; i < M; ++i) {
+		temp *= powerof2;
+		val += (double)mMantisse[i] / temp;
+	}
+	return val;
+}
+
+
 
 // Copy constructor
 template <int M, int E>
@@ -54,13 +131,15 @@ BigFloat<M, E>::BigFloat(const BigFloat<M, E>& b) {
 }
 
 template <int M, int E>
-BigFloat<M, E>::BigFloat(double init) {
+BigFloat<M, E>::BigFloat(double initVal) : mExp(0){
 	printf("Constructor for BigFloat %p was called\n", this);
-	mSgn = init >= 0 ? 1 : -1;
-	mExp = new char[E];
-	mMantisse = new char[M];
+	mSgn = initVal >= 0 ? 1 : -1;
+	initVal *= mSign; //get absolute
+	if (init < 1) {
+		while (mExp < )
+	} else {
 
-
+	}
 }
 
 template <int M, int E>
@@ -71,8 +150,15 @@ BigFloat<M, E>::~BigFloat() {
 }
 
 template <int M, int E>
-char* BigFloat<M, E>::toString() {
-
+std::string& BigFloat<M, E>::toString() {
+	//TODO
+	std::string s = "Sign: " ;
+	s += std::to_string(mSgn);
+	s += " * ";
+	s+= std::to_string(mMantisse.getVal());
+	s += " * 2 ^ ";
+	s += std::to_string(mExp.getVal());
+	return s;
 }
 
 template <int M, int E>
@@ -176,7 +262,7 @@ void BigFloat<M, E>::setSign(int sgn) {
 }
 
 int main() {
-	BigFloat<> a, b;
-	printf("smaller: %d " a < b);
+	BigFloat<> a(0.0024), b(30000.24);
+	printf("smaller: %d, equal: %d\n", a < b, a == b);
 	return 0;
 }

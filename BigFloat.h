@@ -1,6 +1,7 @@
 // Float type with Exponent Bias Shift, Normalized Mantisse. The leading 1 is kept. Saved in Big Endian.
+#include <string.h>
 
-template <int M=8, int E=3>
+template <int M=4, int E=2>
 class BigFloat {
 private:
 
@@ -17,7 +18,7 @@ public:
 	BigFloat(double init=0.);
 	BigFloat(const BigFloat<M, E>& b);
 	~BigFloat();
-	char *toString();
+	std::string& toString();
 	BigFloat<M, E>& operator= (double d);
 	BigFloat<M, E>& operator- () const;
 	BigFloat<M, E>& operator+ (const BigFloat<M, E>& b) const;
@@ -43,8 +44,11 @@ template <int M, int E>
 class BigFloat<M, E>::Exponent {
 private:
 	char *mExp;
-	static const int mBias = 1 << (E * 8 - 1) - 1;
+	static const unsigned int mBias = 1 << (E * 8 - 1) - 1;
 public:
+	static const int MAX = mBias;
+	static const int MIN = -mBias;
+
 	Exponent(int val=0);
 	Exponent(const Exponent& e);
 	~Exponent() { delete mExp; }
@@ -62,5 +66,25 @@ public:
 	bool operator>=(const Exponent& e) const {return *this > e || *this == e;}
 
 	int getVal();
+};
 
+// Only takes Values in [0, 2). Stored in Big Endian. Format:  x.xxxxx
+template <int M, int E>
+class BigFloat<M, E>::Mantisse{
+private:
+	char *mMantisse;
+public:
+	Mantisse(double val=0.);
+	Mantisse(const Mantisse& e);
+	~Mantisse() { delete mMantisse; }
+
+	Mantisse& operator=(double val);
+	bool operator<(const Mantisse& e) const;
+	bool operator>(const Mantisse& e) const {return e < *this;}
+	bool operator==(const Mantisse& e) const;
+	bool operator!=(const Mantisse& e) const {return !(*this == e);}
+	bool operator<=(const Mantisse& e) const {return *this < e || *this == e;}
+	bool operator>=(const Mantisse& e) const {return *this > e || *this == e;}
+
+	double getVal();
 };
