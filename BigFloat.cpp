@@ -5,26 +5,35 @@
 
 template <int M, int E>
 BigFloat<M, E>::Exponent::Exponent(int val) {
-	//printf("Constructor of Exponent %p was called\n", this);
-	mExp = new char[E];
+	printf("Constructor of Exponent %p was called\n", this);
+	mExp = new unsigned char[E];
 	*this = val;
 }
 
-//Copy constructor
+//Copy Constructor
+template <int M, int E>
+BigFloat<M, E>::Exponent::Exponent(const Exponent& e) {
+	printf("Copying Exponent %p in new object %p\n", &e, this);
+	mExp = new unsigned char[E];
+	memcpy(mExp, e.mExp, E);
+}
+
+//Copy operator
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(const Exponent& e) {
 	printf("Copying Exponent %p to %p\n", &e, this);
-	mExp = new char[E];
 	memcpy(mExp, e.mExp, E);
+	printf("Finished.\n");
 	return *this;
 }
 
-//Move constructor
+//Move operator
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(Exponent&& e) {
 	printf("Moving Exponent %p to %p\n", &e, this);
+	char *temp = mExp;
 	mExp = e.mExp;
-	e.mExp = NULL;
+	e.mExp = temp;
 	return *this;
 }
 
@@ -32,7 +41,7 @@ template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(int val) {
 	val += mBias;
 	for (int i = 0; i < E; ++i) {
-		mExp[E - i - 1] = (val >> i*8) & 0xff;
+		mExp[E - i - 1] = (char)(val >> i*8);
 	}
 }
 
@@ -67,26 +76,28 @@ template <int M, int E>
 int BigFloat<M, E>::Exponent::getVal() {
 	int val = 0;
 	for (int i = 0; i < E; ++i) {
-		val += mExp[E - 1 - i];
-		val <<= 8;
+		val |= ((unsigned int)mExp[E - 1 - i] << i * 8);
 	}
 	return val - mBias;
 }
 
-
-
-
 template <int M, int E>
 BigFloat<M, E>::Mantisse::Mantisse(double val) {
-	//printf("Constructor of Mantisse %p was called\n", this);
-	mMantisse = new char[M];
+	printf("Constructor of Mantisse %p was called\n", this);
+	mMantisse = new unsigned char[M];
 	*this = val;
+}
+
+template <int M, int E>
+BigFloat<M, E>::Mantisse::Mantisse(const Mantisse& m) {
+	printf("Copy Mantisse %p into new Object %p\n", &m, this);
+	mMantisse = new unsigned char[M];
+	operator=(m);
 }
 
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(const Mantisse& m) {
 	printf("Copying Mantisse %p to %p\n", &m, this);
-	mMantisse = new char[M];
 	memcpy(mMantisse, m.mMantisse, M);
 	return *this;
 }
@@ -94,8 +105,9 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(const Man
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(Mantisse&& m) {
 		printf("Moving Mantisse %p to %p\n", &m, this);
+		char* temp = mMantisse;
 		mMantisse = m.mMantisse;
-		m.mMantisse = NULL;
+		m.mMantisse = mMantisse;
 		return *this;
 }
 
@@ -103,11 +115,26 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(Mantisse&
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double val) {
 	const double powerof2 = (double) (1 << 8);
-	double temp = powerof2 * 2.;
+	double temp = powerof2 / 2.;
+	printf("%f:\t", val);
 	for (int i = 0; i < M; ++i) {
 		mMantisse[i] = (char)(val * temp);
+		printf("%f - %d\t", val * temp, mMantisse[i]);
+		temp -= mMantisse[i];
 		temp *= powerof2;
 	}
+}
+
+template <int M, int E>
+double BigFloat<M, E>::Mantisse::getVal() {
+	const double powerof2 = (double) (1 << 8);
+	double temp = powerof2 / 2.;
+	double val = (double)mMantisse[0] / temp;
+	for (int i = 1; i < M; ++i) {
+		temp *= powerof2;
+		val += (double)mMantisse[i] / temp;
+	}
+	return val;
 }
 
 template <int M, int E>
@@ -127,30 +154,39 @@ bool BigFloat<M, E>::Mantisse::operator==(const Mantisse& m) const {
 	return true;
 }
 
+
+
+
 template <int M, int E>
-double BigFloat<M, E>::Mantisse::getVal() {
-	const double powerof2= (double) (1 << 8);
-	double temp = powerof2 * 2.;
-	double val = (double)mMantisse[0] / temp;
-	for (int i = 1; i < M; ++i) {
-		temp *= powerof2;
-		val += (double)mMantisse[i] / temp;
-	}
-	return val;
+BigFloat<M, E>::BigFloat(double initVal) {
+	printf("Constructor for BigFloat %p was called\n", this);
+	operator=(initVal);
+}
+
+template <int M, int E>
+BigFloat<M, E>::~BigFloat() {
+	printf("Destructor for BigFloat %p was called\n", this);
 }
 
 
-
 // Copy constructor
+template <int M, int E>
+BigFloat<M, E>::BigFloat(const BigFloat<M, E>& b) :
+	mExp(b.mExp), mMantisse(b.mMantisse), mSgn(b.mSgn) {
+		printf("Copied %p into new object %p\n", &b, this);
+}
+
+// Copy operator
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(const BigFloat<M, E>& b) {
 	printf("Copying %p to %p\n", &b, this);
 	mExp = b.mExp;
 	mMantisse = b.mMantisse;
 	mSgn = b.mSgn;
+	return *this;
 }
 
-// Move constructor
+// Move operator
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
 	printf("Moving %p to %p\n", &b, this);
@@ -160,22 +196,8 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
 }
 
 template <int M, int E>
-BigFloat<M, E>::BigFloat(double initVal) : mExp(0){
-	printf("Constructor for BigFloat %p was called\n", this);
-	operator=(initVal);
-}
-
-template <int M, int E>
-BigFloat<M, E>::~BigFloat() {
-	printf("Destructor for BigFloat %p was called\n", this);
-	mExp.~Exponent();
-	mMantisse.~Mantisse();
-}
-
-template <int M, int E>
 std::string BigFloat<M, E>::toString() {
 	//TODO
-	printf("in function toString()\n");
 	std::string s = "Sign: " ;
 	s += std::to_string(mSgn);
 	s += " * ";
@@ -187,17 +209,20 @@ std::string BigFloat<M, E>::toString() {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
+	int exp = 0;
 	mSgn = d >= 0 ? 1 : -1;
 	d *= mSgn; //get absolute
-	while (d < 1) {
+	while (d < 1 && exp > Exponent::MIN) {
 		d *= 2.;
-		mExp -= 1;
+		exp -= 1;
 	}
-	while (d > 2) {
+	while (d >= 2 && exp < Exponent::MAX) {
 		d /= 2;
-		mExp += 1;
+		exp += 1;
 	}
 	mMantisse = d;
+	mExp = exp;
+	printf("%d * %f *2^%d \t\t %f *2^%d\n", mSgn, d, exp, mMantisse.getVal(), mExp.getVal());
 }
 
 template <int M, int E>
@@ -216,17 +241,23 @@ BigFloat<M, E> BigFloat<M, E>::operator+(const BigFloat<M, E>& b) const {
 
 template <int M, int E>
 BigFloat<M, E> BigFloat<M, E>::operator-(const BigFloat<M, E>& b) const {
-
+	BigFloat a(*this);
+	a -= b;
+	return a;
 }
 
 template <int M, int E>
 BigFloat<M, E> BigFloat<M, E>::operator* (const BigFloat<M, E>& b) const {
-
+	BigFloat a(*this);
+	a *= b;
+	return a;
 }
 
 template <int M, int E>
 BigFloat<M, E> BigFloat<M, E>::operator/ (const BigFloat<M, E>& b) const {
-
+	BigFloat a(*this);
+	a /= b;
+	return a;
 }
 
 template <int M, int E>
@@ -252,15 +283,10 @@ BigFloat<M, E>& BigFloat<M, E>::operator/= (const BigFloat<M, E>& b) {
 template <int M, int E>
 bool BigFloat<M, E>::operator< (const BigFloat<M, E>& b) const {
 	if (b.mSgn == mSgn) {
-		bool isSmaller;
-		if (b.mExp == mExp)
-			isSmaller = mMantisse < b.mMantisse;
+		if (mSgn > 0)
+			return mExp < b.mExp || (mExp == b.mExp && mMantisse < b.mMantisse);
 		else
-			isSmaller = mExp < b.mExp;
-		if (mSgn == -1)
-			return !isSmaller;
-		else
-			return isSmaller;
+			return mExp > b.mExp || (mExp == b.mExp && mMantisse > b.mMantisse);
 	}
 	else {
 		if (mSgn == 1)
@@ -278,7 +304,7 @@ bool BigFloat<M, E>::operator== (const BigFloat<M, E>& b) const {
 
 template <int M, int E>
 bool BigFloat<M, E>::absGreaterThan (const BigFloat<M, E>& b) const {
-
+	return mExp > b.mExp || (mExp == b.mExp && mMantisse > b.mMantisse);
 }
 
 template <int M, int E>
@@ -296,13 +322,13 @@ void BigFloat<M, E>::setSign(int sgn) {
 }
 
 int main() {
-	BigFloat<> a(0.0024), b(30000.24);
-	printf("BigFloat<> c  = -b\n");
-	BigFloat<> c = -b;
-	printf("a = -b\n");
-	a = -b;
-	printf("smaller: %d, equal: %d\n", a < b, a == b);
-	std::string s =  a.toString();
-	printf("%s\n", s.c_str());
+	BigFloat<> a(0.2432342);
+	BigFloat<> b(-2.22222);
+	BigFloat<> t(3.);
+	printf("BigFloat<> c  = -a\n");
+	BigFloat<> c = -a;
+//	printf("smaller: %d, equal: %d\n", a < b, a == b);
+//	printf("%s\n", a.toString().c_str());
+//	printf("%s\n", b.toString().c_str());
 	return 0;
 }

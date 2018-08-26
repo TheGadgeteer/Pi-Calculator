@@ -16,9 +16,10 @@ private:
 	int getSign() const;
 public:
 	BigFloat(double init=0.);
-	BigFloat(const BigFloat<M, E>& b) {operator=(b);}
-	BigFloat(BigFloat<M, E>&& b) {operator=(b);}
+	BigFloat(const BigFloat<M, E>& b);
+	BigFloat(BigFloat<M, E>&& b);
 	~BigFloat();
+
 	std::string toString();
 	BigFloat<M, E>& operator= (double d);
 	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
@@ -46,16 +47,15 @@ public:
 template <int M, int E>
 class BigFloat<M, E>::Exponent {
 private:
-	char *mExp;
+	unsigned char *mExp;
 	static const unsigned int mBias = 1 << (E * 8 - 1) - 1;
 public:
 	static const int MAX = mBias;
 	static const int MIN = -mBias;
 
 	Exponent(int val=0);
-	Exponent(const Exponent& e) {operator=(e);}
-	Exponent(Exponent&& e) {operator=(e);}
-	~Exponent() { delete mExp; }
+	Exponent(const Exponent& e);
+	~Exponent() { delete[] mExp; printf("Destructed Exponent %p\n", this);}
 
 	Exponent& operator=(int val);
 	Exponent& operator=(const Exponent& e);
@@ -78,12 +78,11 @@ public:
 template <int M, int E>
 class BigFloat<M, E>::Mantisse{
 private:
-	char *mMantisse;
+	unsigned char *mMantisse;
 public:
 	Mantisse(double val=0.);
-	Mantisse(const Mantisse& m) {operator=(m);}
-	Mantisse(Mantisse&& m) {operator=(m);}
-	~Mantisse() { delete mMantisse; }
+	Mantisse(const Mantisse& m);
+	~Mantisse() { delete[] mMantisse; printf("Destructed Mantisse %p\n", this);}
 
 	Mantisse& operator=(double val);
 	Mantisse& operator=(const Mantisse& m);
