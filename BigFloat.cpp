@@ -138,36 +138,23 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator>>=(int shi
 	if (shift < 0)
 		return operator<<=(-shift);
 
-	//clear the bits that will be overwritten
-	int i = M - 1, remaining = shift;
-	while (remaining >= 8) {
-		remaining -= 8;
-		mMantisse[i--] = 0;
-	}
-	mMantisse[i] &= (0xff << remaining);
-
 	for (int i = M * 8 - 1 - shift; i >= 0; --i) {
-		int newPos = i + shift;
-		int newChar = newPos / 8, oldChar = i / 8;
-		int posInChar = newPos % 8, oldPos = i % 8;
-		bool isSet = (mMantisse[oldChar] & (1 << oldPos)) > 0;
-		if (isSet)
-			mMantisse[newChar] |= (1 << posInChar);   //set Bit eventually
-	}
+		int oldSegment = i / 8, oldPosInSeg = 7 - i % 8;   //posInSeg:  0 is the most right, 7 the most left
+		int newSegment = (i + shift) / 8, newPosInSeg = 7 - (i + shift) % 8;
 
-	//clear the last bits
-	i = 0; remaining = shift;
-	while (remaining >= 8) {
-		remaining -= 8;
+		if ((mMantisse[oldSegment] & (1 << oldPosInSeg)) != 0)
+			mMantisse[newSegment] |= (1 << newPosInSeg);   // set Bit
+		else
+			mMantisse[newSegment] &= 0xff - (1 << newPosInSeg);  // clear Bit
+	}
+	//clear the bits in front
+	int i = 0;
+	while (shift >= 8) {
+		shift -= 8;
 		mMantisse[i++] = 0;
 	}
-	mMantisse[i] &= (0xff >> remaining);
+	mMantisse[i] &= (0xff >> shift);
 
-
-	for (int i = 0; i < M; ++i)
-		printf("%hhx ", mMantisse[i]);
-	printf("\n");
-	return *this;
 	return *this;
 }
 
@@ -175,15 +162,6 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator>>=(int shi
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shift)
 {
-	shift = 5;
-	printf("bitshift test %d\n", shift);
-	for (int x = 0; x < M; ++x) {
-		for (int i = 0; i < 8; ++i) {
-			printf("%i", (mMantisse[x] & (1 << (7 - i))) > 0);
-		}
-		printf(" ");
-	}
-	printf("\n");
 	if (shift < 0)
 		return operator>>=(-shift);
 
@@ -195,9 +173,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shi
 			mMantisse[newSegment] |= (1 << newPosInSeg);   // set Bit
 		else
 			mMantisse[newSegment] &= 0xff - (1 << newPosInSeg);  // clear Bit
-		//printf("%d, %d  to %d, %d :  %d\tm%d & %d\n", oldSegment, oldPosInSeg, newSegment, newPosInSeg, isSet, mMantisse[oldSegment], (1 << oldPosInSeg));
 	}
-
 	//clear the last bits
 	int i = M - 1;
 	while (shift >= 8) {
@@ -206,13 +182,6 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shi
 	}
 	mMantisse[i] &= (0xff << shift);
 
-	for (int x = 0; x < M; ++x) {
-		for (int i = 0; i < 8; ++i) {
-			printf("%i", (mMantisse[x] & (1 << (7 - i))) > 0);
-		}
-		printf(" ");
-	}
-	printf("\n");
 	return *this;
 }
 
@@ -411,7 +380,7 @@ template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator+= (const BigFloat<M, E>& b) {
 	int exp1 = mExp.getVal();
 	int exp2 = b.mExp.getVal();
-	mMantisse <<= 4;
+	mMantisse <<= -4;
 	return *this;
 }
 
@@ -502,6 +471,5 @@ int main() {
 	//printf("%s, %f\n", c.toString().c_str(), c.getDouble());
 	
 	
-
 	return 0;
 }
