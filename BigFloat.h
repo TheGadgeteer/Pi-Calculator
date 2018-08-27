@@ -3,7 +3,7 @@
 
 typedef unsigned char u_char;
 
-template <int M=10, int E=2>
+template <int M=4, int E=2>
 class BigFloat {
 private:
 
@@ -80,8 +80,12 @@ public:
 // Only takes Values in [0, 2). Stored in Big Endian. Format:  x.xxxxx
 template <int M, int E>
 class BigFloat<M, E>::Mantisse{
+	friend class BigFloat;
 private:
 	u_char *mMantisse;
+
+	Mantisse& operator>>=(int shift);   //The shift operations are private as they only need to be used for the arithmetic operations
+	Mantisse& operator<<=(int shift);
 public:
 	Mantisse(double val=0.);
 	Mantisse(const Mantisse& m);
@@ -91,8 +95,7 @@ public:
 	Mantisse& operator=(double val);
 	Mantisse& operator=(const Mantisse& m);
 	Mantisse& operator=(Mantisse&& m);
-	Mantisse& operator>>=(int shift);
-	Mantisse& operator<<=(int shift);
+
 	bool operator<(const Mantisse& e) const;
 	bool operator>(const Mantisse& e) const {return e < *this;}
 	bool operator==(const Mantisse& e) const;

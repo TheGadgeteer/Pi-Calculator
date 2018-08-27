@@ -175,43 +175,43 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator>>=(int shi
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shift)
 {
-	shift = -8;
+	shift = 5;
 	printf("bitshift test %d\n", shift);
-	for (int i = 0; i < M; ++i)
-		printf("%hhx ", mMantisse[i]);
+	for (int x = 0; x < M; ++x) {
+		for (int i = 0; i < 8; ++i) {
+			printf("%i", (mMantisse[x] & (1 << (7 - i))) > 0);
+		}
+		printf(" ");
+	}
 	printf("\n");
 	if (shift < 0)
 		return operator>>=(-shift);
 
+	for (int i = shift; i < M * 8; ++i) {
+		int oldSegment = i / 8, oldPosInSeg =  7 - i % 8;   //posInSeg:  0 is the most right, 7 the most left
+		int newSegment = (i - shift) / 8, newPosInSeg = 7 - (i - shift) % 8;
 
-	//clear the bits that will be overwritten
-	int i = 0, remaining = shift;
-	while (remaining >= 8) {
-		remaining -= 8;
-		mMantisse[i++] = 0;
-	}
-	mMantisse[i] &= (0xff >> remaining);
-	
-	for (int i = shift; i < M * 8 - shift; ++i) {
-		int newPos = i - shift;
-		int newChar = newPos / 8, oldChar = i / 8;
-		int posInChar = newPos % 8, oldPos = i % 8;
-		bool isSet = (mMantisse[oldChar] & (1 << oldPos)) > 0;
-		if (isSet)
-			mMantisse[newChar] |= (1 << posInChar);   //set Bit eventually
+		if ((mMantisse[oldSegment] & (1 << oldPosInSeg)) != 0)
+			mMantisse[newSegment] |= (1 << newPosInSeg);   // set Bit
+		else
+			mMantisse[newSegment] &= 0xff - (1 << newPosInSeg);  // clear Bit
+		//printf("%d, %d  to %d, %d :  %d\tm%d & %d\n", oldSegment, oldPosInSeg, newSegment, newPosInSeg, isSet, mMantisse[oldSegment], (1 << oldPosInSeg));
 	}
 
 	//clear the last bits
-	i = M - 1; remaining = shift;
-	while (remaining >= 8) {
-		remaining -= 8;
+	int i = M - 1;
+	while (shift >= 8) {
+		shift-= 8;
 		mMantisse[i--] = 0;
 	}
-	mMantisse[i] &= (0xff << remaining);
+	mMantisse[i] &= (0xff << shift);
 
-
-	for (int i = 0; i < M; ++i)
-		printf("%hhx ", mMantisse[i]);
+	for (int x = 0; x < M; ++x) {
+		for (int i = 0; i < 8; ++i) {
+			printf("%i", (mMantisse[x] & (1 << (7 - i))) > 0);
+		}
+		printf(" ");
+	}
 	printf("\n");
 	return *this;
 }
@@ -316,7 +316,6 @@ std::string BigFloat<M, E>::toString(int maxLen) {
 	std::string s = "";
 	if (mSgn < 0)
 		s += '-';
-	//TODO
 	//first, convert part in front of the floating point
 	int numBits = 1 + exp;
 	if (numBits > 64)
@@ -336,8 +335,7 @@ std::string BigFloat<M, E>::toString(int maxLen) {
 			numBits -= 8;
 		}
 		n >>= -numBits;
-
-
+		
 		s += std::to_string(n);
 	}
 	//then the part after the dot
@@ -493,7 +491,7 @@ void BigFloat<M, E>::setSign(int sgn) {
 int main() {
 	//BigFloat<> a(0.2432342);
 	BigFloat<> b(30201516.45462);
-	//b += b;
+	b += b;
 	//BigFloat<> t(-304234);
 	//printf("BigFloat<> c  = -a\n");
 	//BigFloat<> c = -a;
