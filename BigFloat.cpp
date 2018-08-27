@@ -58,6 +58,7 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(int val) 
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator+=(int i) {
 	*this = i + getVal();
+	return *this;
 }
 
 template <int M, int E>
@@ -201,7 +202,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double va
 }
 
 template <int M, int E>
-double BigFloat<M, E>::Mantisse::getVal() {
+double BigFloat<M, E>::Mantisse::getVal() const {
 	const double powerof2 = (double) (1 << 8);
 	double val = (double)mMantisse[M - 1];
 	for (int i = M - 2; i >= 0; --i) {
@@ -280,7 +281,7 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
 // a primitive attempt to convert the BigFloat into a String.
 // Maximum ten digits before the floating point.
 template <int M, int E>
-std::string BigFloat<M, E>::toString(int maxLen) {
+std::string BigFloat<M, E>::toString(int maxLen) const {
 	int exp = mExp.getVal();
 	std::string s = "";
 	if (mSgn < 0)
@@ -331,13 +332,6 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 	mMantisse = d;
 	mExp = exp;
 
-	for (int x = 0; x < M; ++x) {
-		for (int i = 0; i < 8; ++i) {
-			printf("%i", (mMantisse[x] & (1 << (7 - i))) > 0);
-		}
-		printf(" ");
-	}
-	printf("\texp: %d\n", exp);
 	return *this;
 }
 
@@ -378,9 +372,49 @@ BigFloat<M, E> BigFloat<M, E>::operator/ (const BigFloat<M, E>& b) const {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator+= (const BigFloat<M, E>& b) {
+	
 	int exp1 = mExp.getVal();
 	int exp2 = b.mExp.getVal();
-	mMantisse <<= -4;
+	int offset = exp1 - exp2;
+	double d = b.getDouble();
+	printf("Adding with offset %d: \n", offset);
+	printBits(*this);
+	printBits(b);
+	if (offset < 0) { // If exp1 < exp2 : Shift Mantisse
+		mMantisse >>= (-offset);
+		mExp = exp2;
+		offset = 0;
+	}
+	// Add Mantisse, consider the offset between the two
+	int carryBit = 0;
+	//i is the index of the current bit in b.mMantisse;  the most right position has index 0
+	for (int i = M*8 - 1; i >= 0; --i) {
+		int val;
+		if (i >= offset)
+			val = mMantisse.getBit(i) + b.mMantisse.getBit(i - offset) + carryBit;
+		else {
+			if (carryBit = 0)
+				break;
+			val = mMantisse.getBit(i) + carryBit;
+		}
+		if (val > 1) {
+			val -= 2;
+			carryBit = 1;
+		} else
+			carryBit = 0;
+		//set Bit in Mantisse according to the result
+		if (val == 0)
+			mMantisse.clearBit(i);
+		else
+			mMantisse.setBit(i);
+	}
+	if (carryBit > 0) {
+			mMantisse >>= 1;
+			mExp += 1;
+			mMantisse.setBit(0);
+	}
+	printf("result: ");
+	printBits(*this);
 	return *this;
 }
 
@@ -434,8 +468,7 @@ BigFloat<M, E> BigFloat<M, E>::abs() const {
 }
 
 template<int M, int E>
-double BigFloat<M, E>::getDouble()
-{
+double BigFloat<M, E>::getDouble() const {
 	double d = mSgn * mMantisse.getVal();
 	int exp = mExp.getVal();
 	while (exp > 0) {
@@ -457,14 +490,27 @@ void BigFloat<M, E>::setSign(int sgn) {
 		mSgn = sgn;
 }
 
+
+template<int M, int E>
+void printBits(const BigFloat<M, E>& b) {
+	printf("%f:\t", b.getDouble());
+	for (int x = 0; x < M; ++x) {
+		for (int i = 0; i < 8; ++i) {
+			printf("%i", (b.mMantisse[x] & (1 << (7 - i))) > 0);
+		}
+		printf(" ");
+	}
+	printf("\texp: %d\n", b.mExp.getVal());
+}
+
 int main() {
-	//BigFloat<> a(0.2432342);
-	BigFloat<> b(30201516.45462);
-	b += b;
+	BigFloat<> a(28500.564);
+	BigFloat<> b(0.003125);
+	//a += b;
+	printf("%s, %f\n", (b + a).toString().c_str(), (b + a).getDouble());
 	//BigFloat<> t(-304234);
 	//printf("BigFloat<> c  = -a\n");
 	//BigFloat<> c = -a;
-//	printf("smaller: %d, equal: %d\n", a < b, a == b);
 	//printf("%s, %f\n", a.toString().c_str(), a.getDouble());
 	printf("%s, %f\n", b.toString().c_str(), b.getDouble());
 	//printf("%s, %f\n", t.toString().c_str(), t.getDouble());

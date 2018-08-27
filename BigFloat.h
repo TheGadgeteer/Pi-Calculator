@@ -3,10 +3,11 @@
 
 typedef unsigned char u_char;
 
-template <int M=4, int E=2>
+template <int M=8, int E=2>
 class BigFloat {
+	template <int M, int E>
+	friend void printBits(const BigFloat<M,E>&); //TODO: delete later
 private:
-
 	class Exponent;
 	class Mantisse;
 
@@ -21,7 +22,7 @@ public:
 	BigFloat(BigFloat<M, E>&& b);
 	~BigFloat();
 
-	std::string toString(int maxLen = 100);
+	std::string toString(int maxLen = 100) const;
 	BigFloat<M, E>& operator= (double d);
 	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator= (BigFloat<M, E>&& b);
@@ -42,7 +43,7 @@ public:
 	bool operator>= (const BigFloat<M, E>& b) const { return (operator>(b) || operator==(b));}
 	bool absGreaterThan (const BigFloat<M, E>& b) const;
 	BigFloat<M, E> abs() const;
-	double getDouble();
+	double getDouble() const;
 
 };
 
@@ -86,6 +87,7 @@ private:
 
 	Mantisse& operator>>=(int shift);   //The shift operations are private as they only need to be used for the arithmetic operations
 	Mantisse& operator<<=(int shift);
+
 public:
 	Mantisse(double val=0.);
 	Mantisse(const Mantisse& m);
@@ -103,6 +105,12 @@ public:
 	bool operator<=(const Mantisse& e) const {return *this < e || *this == e;}
 	bool operator>=(const Mantisse& e) const {return *this > e || *this == e;}
 	u_char& operator[](std::size_t idx) { return mMantisse[idx]; }
+	const u_char& operator[](std::size_t idx) const { return mMantisse[idx]; }
 
-	double getVal();
+	// The Index 0 is the most left, the Index M*8 - 1 the most right.
+	int getBit(int idx) const { return (mMantisse[idx / 8] & (1 << (7 - (idx % 8)))) != 0; }
+	void setBit(int idx) { mMantisse[idx / 8] |= (1 << (7 - (idx % 8))); }
+	void clearBit(const int idx) { mMantisse[idx / 8] &= 0xff - (1 << (7 - (idx % 8))); }
+
+	double getVal() const;
 };
