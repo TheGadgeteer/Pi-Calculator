@@ -567,7 +567,7 @@ void printBits(const BigFloat<M, E>& b) {
 	printf("\texp: %d\n", b.mExp.getVal());
 }
 
-int main() {
+int _main() {
 	BigFloat<> a(3000.00031);
 	BigFloat<> b(0.3125);
 	a -= b;
