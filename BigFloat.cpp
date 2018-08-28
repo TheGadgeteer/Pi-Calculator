@@ -433,11 +433,8 @@ BigFloat<M, E>& BigFloat<M, E>::addAbs(const BigFloat<M, E>& b) {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator-= (const BigFloat<M, E>& b) {
-	if (mSgn == b.mSgn) {
-		if (mSgn > 0)
-			return subAbs(b);
-		else  // -|this| + b
-			return *this += b;
+	if (mSgn == b.mSgn) { //case 1: both pos  -> this - b = |this| - |b|;   case 2: both neg -> -|this| - -|b| = - ||this| - |b|| 
+		return subAbs(b);
 	} else   // case 1:  this pos, b neg -> this = this + |b|;   case 2:  this neg, b pos -> this = -|this| - b = -|this + b|
 		return addAbs(b);   
 }
@@ -445,50 +442,54 @@ BigFloat<M, E>& BigFloat<M, E>::operator-= (const BigFloat<M, E>& b) {
 //performs |*this| -= |b|,  completely ignoring any signs
 template<int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b) {
-	if (*this < b) {
-		printf("This is smaller than b\n");
+	if (this->absSmallerThan(b)) { //this = this - b = -|b - this| 
 		BigFloat<M, E>* pTemp = new BigFloat<M, E>(b);
 		pTemp->subAbs(*this);
+		pTemp->setSign(-mSgn);  // switch sign
 		*this = std::move(*pTemp);
 		delete pTemp;
-	}
-	int exp1 = mExp.getVal();
-	int exp2 = b.mExp.getVal();
-	int offset = exp1 - exp2;
+	} else {
+		int exp1 = mExp.getVal();
+		int exp2 = b.mExp.getVal();
+		int offset = exp1 - exp2;
 
-	int carryBit = 0;
-	printBits(*this);
-	printBits(b);
-	//i is the index of the current bit in b.mMantisse;  the most right position has index 0
-	for (int i = M * 8 - 1; i >= 0; --i) {
-		int val;
-		if (i >= offset) {
-			val = mMantisse.getBit(i) - b.mMantisse.getBit(i - offset) - carryBit;
-		}  else {
-			if (carryBit == 0)
-				break;
-			val = mMantisse.getBit(i) - carryBit;
+		int carryBit = 0;
+		//i is the index of the current bit in b.mMantisse;  the most right position has index 0
+		for (int i = M * 8 - 1; i >= 0; --i) {
+			int val;
+			if (i >= offset) {
+				val = mMantisse.getBit(i) - b.mMantisse.getBit(i - offset) - carryBit;
+			}
+			else {
+				if (carryBit == 0)
+					break;
+				val = mMantisse.getBit(i) - carryBit;
+			}
+			if (val < 0) {
+				val += 2;
+				carryBit = 1;
+			}
+			else {
+				carryBit = 0;
+			}
+			//set Bit in Mantisse according to the result
+			if (val == 0)
+				mMantisse.clearBit(i);
+			else
+				mMantisse.setBit(i);
 		}
-		if (val < 0) {
-			val += 2;
-			carryBit = 1;
-		} else {
-			carryBit = 0;
+		if (carryBit > 0)
+			printf("Something went wrong.");
+		int shift = 0;
+		while (shift < M * 8 && mMantisse.getBit(shift) == 0)
+			shift++;
+		if (shift == M * 8)  // result is 0.0
+			mExp = Exponent::MIN;
+		else {
+			mExp -= shift;
+			mMantisse <<= shift;
 		}
-		//set Bit in Mantisse according to the result
-		if (val == 0)
-			mMantisse.clearBit(i);
-		else
-			mMantisse.setBit(i);
 	}
-	if (carryBit > 0)
-		printf("Something went wrong.");
-	int shift = 0;
-	while (mMantisse.getBit(shift) == 0)
-		shift++;
-	mExp -= shift;
-	mMantisse <<= shift;
-	printBits(*this);
 	return *this;
 }
 
@@ -525,10 +526,9 @@ bool BigFloat<M, E>::operator== (const BigFloat<M, E>& b) const {
 }
 
 template <int M, int E>
-bool BigFloat<M, E>::absGreaterThan (const BigFloat<M, E>& b) const {
-	return mExp > b.mExp || (mExp == b.mExp && mMantisse > b.mMantisse);
+bool BigFloat<M, E>::absSmallerThan(const BigFloat<M, E>& b) const {
+	return mExp < b.mExp || (mExp == b.mExp && mMantisse < b.mMantisse);
 }
-
 template <int M, int E>
 BigFloat<M, E> BigFloat<M, E>::abs() const {
 	BigFloat b(*this);
@@ -582,29 +582,23 @@ void checkMem() {
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
 	printf("Checked for Memory Leaks: %d\n", _CrtDumpMemoryLeaks());
-
-	system("pause");
+	//system("pause");
 }
 
 int main() {
 	atexit(checkMem);
 	BigFloat<> a(3400.00031);
 	BigFloat<> b(1.003125);
-	BigFloat<> c = std::move(a);
-	c = std::move(b);
+	BigFloat<> c(-0.01);
+	printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());
+	BigFloat<> t(-304234);
+	printf("BigFloat<> c  = -a\n");
+	BigFloat<> d = -a;
+	printf("%s, %f\n", a.toString().c_str(), a.getDouble());
+	printf("%s, %f\n", b.toString().c_str(), b.getDouble());
+	printf("%s, %f\n", t.toString().c_str(), t.getDouble());
+	printf("%s, %f\n", c.toString().c_str(), c.getDouble());
+	
 	printf("\nEND\n\n");
-	return 0;
-	//b -= a;
-	//printBits(b);
-	//printf("%f, %f\n", (b + a).getDouble(), (-b + -a).getDouble());
-	//BigFloat<> t(-304234);
-	//printf("BigFloat<> c  = -a\n");
-	//BigFloat<> c = -a;
-	//printf("%s, %f\n", a.toString().c_str(), a.getDouble());
-	//printf("%s, %f\n", b.toString().c_str(), b.getDouble());
-	//printf("%s, %f\n", t.toString().c_str(), t.getDouble());
-	//printf("%s, %f\n", c.toString().c_str(), c.getDouble());
-	
-	
 	return 0;
 }

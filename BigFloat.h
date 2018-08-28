@@ -43,7 +43,8 @@ public:
 	bool operator!= (const BigFloat<M, E>& b) const { return !(operator==(b)); }
 	bool operator<= (const BigFloat<M, E>& b) const { return (operator<(b) || operator==(b));}
 	bool operator>= (const BigFloat<M, E>& b) const { return (operator>(b) || operator==(b));}
-	bool absGreaterThan (const BigFloat<M, E>& b) const;
+
+	bool absSmallerThan(const BigFloat<M, E>& b) const;
 	BigFloat<M, E> abs() const;
 	double getDouble() const;
 
