@@ -372,28 +372,39 @@ BigFloat<M, E> BigFloat<M, E>::operator/ (const BigFloat<M, E>& b) const {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator+= (const BigFloat<M, E>& b) {
-	
+	if (mSgn == b.mSgn)
+		return addAbs(b);
+	else if (mSgn > b.mSgn) { // *this is positiv, b is negative
+		return subAbs(b);
+	} else {
+		BigFloat<M, E>* pTemp = new BigFloat<M, E>(*this);
+		*this = b;
+		*this -= *pTemp;
+		delete pTemp;
+		return *this;
+	}
+}
+
+//performs |*this| += |b|,  completely ignoring any signs
+template<int M, int E>
+BigFloat<M, E>& BigFloat<M, E>::addAbs(const BigFloat<M, E>& b) {
 	int exp1 = mExp.getVal();
 	int exp2 = b.mExp.getVal();
 	int offset = exp1 - exp2;
 	double d = b.getDouble();
-	printf("Adding with offset %d: \n", offset);
-	printBits(*this);
-	printBits(b);
 	if (offset < 0) { // If exp1 < exp2 : Shift Mantisse
 		mMantisse >>= (-offset);
 		mExp = exp2;
 		offset = 0;
 	}
-	// Add Mantisse, consider the offset between the two
 	int carryBit = 0;
 	//i is the index of the current bit in b.mMantisse;  the most right position has index 0
-	for (int i = M*8 - 1; i >= 0; --i) {
+	for (int i = M * 8 - 1; i >= 0; --i) {
 		int val;
 		if (i >= offset)
 			val = mMantisse.getBit(i) + b.mMantisse.getBit(i - offset) + carryBit;
 		else {
-			if (carryBit = 0)
+			if (carryBit == 0)
 				break;
 			val = mMantisse.getBit(i) + carryBit;
 		}
@@ -409,18 +420,29 @@ BigFloat<M, E>& BigFloat<M, E>::operator+= (const BigFloat<M, E>& b) {
 			mMantisse.setBit(i);
 	}
 	if (carryBit > 0) {
-			mMantisse >>= 1;
-			mExp += 1;
-			mMantisse.setBit(0);
+		mMantisse >>= 1;
+		mExp += 1;
+		mMantisse.setBit(0);
 	}
-	printf("result: ");
-	printBits(*this);
 	return *this;
 }
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator-= (const BigFloat<M, E>& b) {
+	if (mSgn == b.mSgn) {
+		if (mSgn > 0)
+			return subAbs(b);
+		else  // -|this| + b
+			return *this += b;
+	} else   // case 1:  this pos, b neg -> this = this + |b|;   case 2:  this neg, b pos -> this = -|this| - b = -|this + b|
+		return addAbs(b);   
+}
+
+//performs |*this| -= |b|,  completely ignoring any signs
+template<int M, int E>
+BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b) {
 	//TODO
+	return *this;
 }
 
 template <int M, int E>
@@ -504,10 +526,10 @@ void printBits(const BigFloat<M, E>& b) {
 }
 
 int main() {
-	BigFloat<> a(28500.564);
+	BigFloat<> a(285000.564);
 	BigFloat<> b(0.003125);
-	//a += b;
-	printf("%s, %f\n", (b + a).toString().c_str(), (b + a).getDouble());
+	a += b;
+	printf("%f, %f\n", (b + a).getDouble(), (-b + -a).getDouble());
 	//BigFloat<> t(-304234);
 	//printf("BigFloat<> c  = -a\n");
 	//BigFloat<> c = -a;

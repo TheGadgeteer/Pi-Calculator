@@ -16,6 +16,8 @@ private:
 	Mantisse mMantisse;
 
 	void setSign(int sgn);
+	BigFloat<M, E>& BigFloat<M, E>::addAbs(const BigFloat<M, E>& b);
+	BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b);
 public:
 	BigFloat(double init=0.);
 	BigFloat(const BigFloat<M, E>& b);
