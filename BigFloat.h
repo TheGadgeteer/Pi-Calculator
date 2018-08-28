@@ -3,7 +3,7 @@
 
 typedef unsigned char u_char;
 
-template <int M=8, int E=2>
+template <int M=4, int E=2>
 class BigFloat {
 	template <int M, int E>
 	friend void printBits(const BigFloat<M,E>&); //TODO: delete later

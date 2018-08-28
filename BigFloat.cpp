@@ -40,7 +40,7 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(const Exp
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(Exponent&& e) {
 	printf("Moving Exponent %p to %p\n", &e, this);
-	char *temp = mExp;
+	u_char *temp = mExp;
 	mExp = e.mExp;
 	e.mExp = temp;
 	return *this;
@@ -63,7 +63,7 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator+=(int i) {
 
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator-=(int i) {
-	*this = getVal() - i;
+	return *this = getVal() - i;
 }
 
 template <int M, int E>
@@ -126,7 +126,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(const Man
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(Mantisse&& m) {
 		printf("Moving Mantisse %p to %p\n", &m, this);
-		char* temp = mMantisse;
+		u_char* temp = mMantisse;
 		mMantisse = m.mMantisse;
 		m.mMantisse = mMantisse;
 		return *this;
@@ -276,6 +276,7 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
 	mExp = std::move(b.mExp);
 	mMantisse = std::move(b.mMantisse);
 	mSgn = b.mSgn;
+	return *this;
 }
 
 // a primitive attempt to convert the BigFloat into a String.
@@ -391,7 +392,6 @@ BigFloat<M, E>& BigFloat<M, E>::addAbs(const BigFloat<M, E>& b) {
 	int exp1 = mExp.getVal();
 	int exp2 = b.mExp.getVal();
 	int offset = exp1 - exp2;
-	double d = b.getDouble();
 	if (offset < 0) { // If exp1 < exp2 : Shift Mantisse
 		mMantisse >>= (-offset);
 		mExp = exp2;
@@ -441,7 +441,49 @@ BigFloat<M, E>& BigFloat<M, E>::operator-= (const BigFloat<M, E>& b) {
 //performs |*this| -= |b|,  completely ignoring any signs
 template<int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b) {
-	//TODO
+	if (*this < b) {
+		BigFloat<M, E>* pTemp = new BigFloat<M, E>(b);
+		(*pTemp).subAbs(*this);
+		*this = std::move(*pTemp);
+		delete pTemp;
+	}
+	int exp1 = mExp.getVal();
+	int exp2 = b.mExp.getVal();
+	int offset = exp1 - exp2;
+
+	int carryBit = 0;
+	printBits(*this);
+	printBits(b);
+	//i is the index of the current bit in b.mMantisse;  the most right position has index 0
+	for (int i = M * 8 - 1; i >= 0; --i) {
+		int val;
+		if (i >= offset) {
+			val = mMantisse.getBit(i) - b.mMantisse.getBit(i - offset) - carryBit;
+		}  else {
+			if (carryBit == 0)
+				break;
+			val = mMantisse.getBit(i) - carryBit;
+		}
+		if (val < 0) {
+			val += 2;
+			carryBit = 1;
+		} else {
+			carryBit = 0;
+		}
+		//set Bit in Mantisse according to the result
+		if (val == 0)
+			mMantisse.clearBit(i);
+		else
+			mMantisse.setBit(i);
+	}
+	if (carryBit > 0)
+		printf("Something went wrong.");
+	int shift = 0;
+	while (mMantisse.getBit(shift) == 0)
+		shift++;
+	mExp -= shift;
+	mMantisse <<= shift;
+	printBits(*this);
 	return *this;
 }
 
@@ -458,15 +500,15 @@ BigFloat<M, E>& BigFloat<M, E>::operator/= (const BigFloat<M, E>& b) {
 template <int M, int E>
 bool BigFloat<M, E>::operator< (const BigFloat<M, E>& b) const {
 	if (b.mSgn == mSgn) {
-		if (mSgn > 0)
+		if (mSgn > 0)  // both numbers positive
 			return mExp < b.mExp || (mExp == b.mExp && mMantisse < b.mMantisse);
-		else
+		else		   // both numbers negative
 			return mExp > b.mExp || (mExp == b.mExp && mMantisse > b.mMantisse);
 	}
 	else {
-		if (mSgn == 1)
+		if (mSgn == 1)  // this positive, b negative
 			return false;
-		else
+		else			// this negative, b positive
 			return true;
 	}
 
@@ -526,15 +568,15 @@ void printBits(const BigFloat<M, E>& b) {
 }
 
 int main() {
-	BigFloat<> a(285000.564);
-	BigFloat<> b(0.003125);
-	a += b;
-	printf("%f, %f\n", (b + a).getDouble(), (-b + -a).getDouble());
+	BigFloat<> a(3000.00031);
+	BigFloat<> b(0.3125);
+	a -= b;
+	//printf("%f, %f\n", (b + a).getDouble(), (-b + -a).getDouble());
 	//BigFloat<> t(-304234);
 	//printf("BigFloat<> c  = -a\n");
 	//BigFloat<> c = -a;
 	//printf("%s, %f\n", a.toString().c_str(), a.getDouble());
-	printf("%s, %f\n", b.toString().c_str(), b.getDouble());
+	//printf("%s, %f\n", b.toString().c_str(), b.getDouble());
 	//printf("%s, %f\n", t.toString().c_str(), t.getDouble());
 	//printf("%s, %f\n", c.toString().c_str(), c.getDouble());
 	
