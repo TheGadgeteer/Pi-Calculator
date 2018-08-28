@@ -3,8 +3,8 @@
 
 void ftoa(double f, char *out, int afterpoint);
 
-int main() {
-	char c[100];
+int _main() {
+	char c[50];
 	double f = -232132.451;
 	ftoa(f, c, 6);
 	printf("%f: %s\n", f, c);

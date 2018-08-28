@@ -3,7 +3,7 @@
 
 typedef unsigned char u_char;
 
-template <int M=4, int E=2>
+template <int M=8, int E=2>
 class BigFloat {
 	template <int M, int E>
 	friend void printBits(const BigFloat<M,E>&); //TODO: delete later
@@ -61,7 +61,7 @@ public:
 	Exponent(int val=0);
 	Exponent(const Exponent& e);
 	Exponent(Exponent&& e);
-	~Exponent() { delete[] mExp; printf("Destructed Exponent %p\n", this);}
+	~Exponent() { delete[] mExp; printf("\tDestructed Exponent %p\n", this);}
 
 	Exponent& operator=(int val);
 	Exponent& operator=(const Exponent& e);
@@ -94,7 +94,7 @@ public:
 	Mantisse(double val=0.);
 	Mantisse(const Mantisse& m);
 	Mantisse(Mantisse&& m);
-	~Mantisse() { delete[] mMantisse; printf("Destructed Mantisse %p\n", this);}
+	~Mantisse() { delete[] mMantisse; printf("\tDestructed Mantisse %p\n", this);}
 
 	Mantisse& operator=(double val);
 	Mantisse& operator=(const Mantisse& m);
