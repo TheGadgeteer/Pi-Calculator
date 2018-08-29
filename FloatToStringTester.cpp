@@ -5,7 +5,7 @@ void ftoa(double f, char *out, int afterpoint);
 
 int test_main() {
 	char c[50];
-	double f = -232132.451;
+	double f = -123.451;
 	ftoa(f, c, 20);
 	printf("%f: %s\n", f, c);
 	return 0;
@@ -13,23 +13,24 @@ int test_main() {
 
 
 void ftoa(double f, char *out, int maxLen) {
-	int exp = 0, idx = 0;
+	int exp = -1, idx = 0;
 	const int base = 10;
 	double throwaway;
 	if (f < 0) {
 		out[idx++] = '-';
 		f = -f;
 	}
-	if (f < 1)
+	if (f < 1) {
 		out[idx++] = '0';
-	else {
+		out[idx++] = '.';
+	} else {
 		do {
 			f /= base;
 			exp++;
 		} while (f >= 1);
 	}
 	// Digits in front of point
-	while (idx < maxLen) {
+	while (idx < maxLen - 1) {
 		f *= base;
 		out[idx++] = (int)f + 48;
 		f = modf(f, &throwaway);

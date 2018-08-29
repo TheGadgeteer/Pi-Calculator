@@ -304,10 +304,10 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 }
 
 // Writes BigFloat as String into out.
-// maxLen: Max number of digits; excluding the string-ending '\0'.
+// maxLen: Max number of digits including the string-ending '\0'.
 template <int M, int E>
 void BigFloat<M, E>::toString(char *out, int maxLen) const {
-	int exp = 0, idx = 0;  //exponent to BASE, idx: next free index in out array
+	int exp = -1, idx = 0;  //exponent to BASE, idx: next free index in out array
 	const BigFloat<M, E> BASE = 10;
 	BigFloat<M, E> f(*this);
 	if (f.mSgn < 0) {
@@ -315,6 +315,7 @@ void BigFloat<M, E>::toString(char *out, int maxLen) const {
 	}
 	if ((int)f.mExp < 0) {
 		out[idx++] = '0';
+		out[idx++] = '.';
 	} else {
 		do {
 			f /= BASE;
@@ -322,7 +323,7 @@ void BigFloat<M, E>::toString(char *out, int maxLen) const {
 		} while ((int)f.mExp >= 0);
 	}
 	// Digits in front of point
-	while (idx < maxLen) {
+	while (idx < maxLen - 1) {
 		f *= BASE;
 		out[idx++] = f.floor() + 48;
 		f.substractFloor();
@@ -626,22 +627,19 @@ int main() {
 	BigFloat<> d(-0.01);
 	BigFloat<> e(0.9734);
 	BigFloat<> f = -a;
-	printf("\n%f, %f, %f, %f, %f\n\n", a.substractFloor().getDouble(), b.substractFloor().getDouble(), 
-		c.substractFloor().getDouble(), d.substractFloor().getDouble(), e.substractFloor().getDouble());
 	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());  // correct
 
 	printf("\nresults: %f, %f\n", (a * b).getDouble(), (b * c).getDouble());
 	//printf("\nresults: %f, %f\n", (a - t).getDouble(), (t - a).getDouble());
 	//printf("\nresults: %f, %f, %f, %f\n", (t + c).getDouble(), (c + t).getDouble(), (a + d).getDouble(), (a + c).getDouble()); //correct
-	
-	return 0;
-	
-	char numbers[5][100];
-	/*a.toString(numbers[0], 100);
-	b.toString(numbers[0], 100);
-	c.toString(numbers[0], 100);
-	d.toString(numbers[0], 100);*/
-	e.toString(numbers[0], 100);
+
+	const int LEN = 20;
+	char numbers[5][LEN];
+	/*a.toString(numbers[0], LEN);
+	b.toString(numbers[1], LEN);
+	c.toString(numbers[2], LEN);
+	d.toString(numbers[3], LEN);*/
+	e.toString(numbers[4], LEN);
 
 	/*printf("%s, %f\n", numbers[0], a.getDouble());
 	printf("%s, %f\n", numbers[1], b.getDouble());
