@@ -153,13 +153,15 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator>>=(int shi
 			mMantisse[newSegment] &= 0xff - (1 << newPosInSeg);  // clear Bit
 	}
 	//clear the bits in front
+	
 	int i = 0;
 	while (shift >= 8 && i < M) {
 		shift -= 8;
 		mMantisse[i++] = 0;
 	}
-	mMantisse[i] &= (0xff >> shift);
-
+	if (i < M)
+		mMantisse[i] &= (0xff >> shift);
+	
 	return *this;
 }
 
@@ -185,7 +187,8 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shi
 		shift-= 8;
 		mMantisse[i--] = 0;
 	}
-	mMantisse[i] &= (0xff << shift);
+	if (i >= 0)
+		mMantisse[i] &= (0xff << shift);
 
 	return *this;
 }
@@ -391,6 +394,7 @@ BigFloat<M, E>& BigFloat<M, E>::addAbs(const BigFloat<M, E>& b) {
 		mExp = exp2;
 		offset = 0;
 	}
+
 	int carryBit = 0;
 	//i is the index of the current bit in b.mMantisse;  the most right position has index 0
 	for (int i = M * 8 - 1; i >= 0; --i) {
@@ -486,23 +490,15 @@ BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b) {
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
 	BigFloat<M, E> result(0.);
+	result.setSign(mSgn == b.mSgn ? 1 : -1);
 	int midExp = mExp.getVal() + b.mExp.getVal();
-	printf("\nMultiplying:\n");
-	printBits(*this);
-	printBits(b);
 	for (int i = M*8 - 1; i >= 0; --i) {
 		if (b.mMantisse.getBit(i)) {
 			mExp = midExp - i;
-			//result += *this;
+			result.addAbs(*this);
 		}
 	}
 	*this = std::move(result);
-	if (mSgn != b.mSgn)
-		setSign(-1);
-	else
-		setSign(1);
-	printf("result: \n");
-	printBits(*this);
 	return *this;
 }
 
@@ -617,7 +613,7 @@ void checkMem() {
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
 	printf("Checked for Memory Leaks: %d\n", _CrtDumpMemoryLeaks());
-	system("pause");
+	//system("pause");
 }
 
 int main() {
@@ -629,8 +625,8 @@ int main() {
 	BigFloat<> f = -a;
 	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());  // correct
 
-	printf("\nresults: %f, %f\n", (a * b).getDouble(), (b * c).getDouble());
-	//printf("\nresults: %f, %f\n", (a - t).getDouble(), (t - a).getDouble());
+	printf("\nresults: %f, %f\n", (a * b).getDouble(), (b * a).getDouble());
+	printf("\nresults: %f, %f\n", (d * d).getDouble(), (e * f).getDouble());
 	//printf("\nresults: %f, %f, %f, %f\n", (t + c).getDouble(), (c + t).getDouble(), (a + d).getDouble(), (a + c).getDouble()); //correct
 
 	const int LEN = 20;
