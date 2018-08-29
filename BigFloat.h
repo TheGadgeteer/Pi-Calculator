@@ -43,10 +43,15 @@ public:
 	bool operator!= (const BigFloat<M, E>& b) const { return !(operator==(b)); }
 	bool operator<= (const BigFloat<M, E>& b) const { return (operator<(b) || operator==(b));}
 	bool operator>= (const BigFloat<M, E>& b) const { return (operator>(b) || operator==(b));}
+	operator double() const { return this->getDouble(); }
+	operator int() const { return this->floor(); }
 
 	bool absSmallerThan(const BigFloat<M, E>& b) const;
 	BigFloat<M, E> abs() const;
 	double getDouble() const;
+	int floor() const;
+	BigFloat<M, E>& substractFloor();  //needed for toString() function
+
 
 };
 
@@ -77,6 +82,7 @@ public:
 	bool operator!=(const Exponent& e) const {return !(*this == e);}
 	bool operator<=(const Exponent& e) const {return *this < e || *this == e;}
 	bool operator>=(const Exponent& e) const {return *this > e || *this == e;}
+	operator int() const { return this->getVal(); }
 
 	int getVal() const;
 };

@@ -3,7 +3,7 @@
 
 void ftoa(double f, char *out, int afterpoint);
 
-int _main() {
+int test_main() {
 	char c[50];
 	double f = -232132.451;
 	ftoa(f, c, 6);

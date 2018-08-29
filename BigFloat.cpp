@@ -40,7 +40,7 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(const Exp
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(Exponent&& e) {
 	printf("\tMoving Exponent %p to %p\n", &e, this);
-	delete mExp;
+	delete[] mExp;
 	mExp = e.mExp;
 	e.mExp = nullptr;
 	return *this;
@@ -130,7 +130,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(const Man
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(Mantisse&& m) {
 		printf("\tMoving Mantisse %p to %p\n", &m, this);
-		delete mMantisse;
+		delete[] mMantisse;
 		mMantisse = m.mMantisse;
 		m.mMantisse = nullptr;
 		return *this;
@@ -154,7 +154,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator>>=(int shi
 	}
 	//clear the bits in front
 	int i = 0;
-	while (shift >= 8) {
+	while (shift >= 8 && i < M) {
 		shift -= 8;
 		mMantisse[i++] = 0;
 	}
@@ -181,7 +181,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shi
 	}
 	//clear the last bits
 	int i = M - 1;
-	while (shift >= 8) {
+	while (shift >= 8 && i >= 0) {
 		shift-= 8;
 		mMantisse[i--] = 0;
 	}
@@ -489,7 +489,30 @@ BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b) {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
-	//TODO
+	BigFloat<M, E> result(0.);
+	int midExp = mExp.getVal() + b.mExp.getVal();
+	printf("\nMultiplying:\n");
+	printBits(*this);
+	printBits(b);
+	for (int i = M*8 - 1; i >= 0; --i) {
+		if (b.mMantisse.getBit(i)) {
+			printf("1");
+			mExp = midExp - i;
+			//result += *this;
+		}
+		else
+			printf("0");
+	}
+	printf("\n");
+	*this = std::move(result);
+	printf("result: \n");
+	if (mSgn != b.mSgn)
+		setSign(-1);
+	else
+		setSign(1);
+
+	printBits(*this);
+	return *this;
 }
 
 template <int M, int E>
@@ -546,6 +569,31 @@ double BigFloat<M, E>::getDouble() const {
 			
 }
 
+template<int M, int E>
+int BigFloat<M, E>::floor() const {
+	int exp = mExp.getVal();
+	exp = mExp;
+	int ret = 0;
+	int idx = 0;
+	while (exp >= 0 && idx < M) {
+		ret <<= 8;
+		ret |= (unsigned int)mMantisse[idx++];
+		exp -= 8;
+	}
+	ret >>= -exp - 1;
+	return mSgn * ret;
+}
+
+template<int M, int E>
+BigFloat<M, E>& BigFloat<M, E>::substractFloor() {
+	int exp = mExp;
+	if (exp >= 0) {
+		mMantisse <<= exp + 1;
+		mExp = -1;
+	}
+	return *this;
+}
+
 //set to 1 or -1
 template <int M, int E>
 void BigFloat<M, E>::setSign(int sgn) {
@@ -576,21 +624,22 @@ void checkMem() {
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
 	printf("Checked for Memory Leaks: %d\n", _CrtDumpMemoryLeaks());
-	//system("pause");
+	system("pause");
 }
 
 int main() {
-	atexit(checkMem);
 	BigFloat<> a(340000.00031);
 	BigFloat<> t(-304234);
 	BigFloat<> b(1.003125);
 	BigFloat<> c(-0.01);
-	BigFloat<> e(0.9734);
-	BigFloat<> d = -a;
+	BigFloat<> d(0.9734);
+	BigFloat<> e = -a;
+	printf("\n%f, %f, %f, %f, %f\n\n", a.substractFloor().getDouble(), t.substractFloor().getDouble(), 
+		b.substractFloor().getDouble(), c.substractFloor().getDouble(), d.substractFloor().getDouble());
 	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());  // correct
 
-	printf("\nresults: %f, %f\n", (a + t).getDouble(), (t + a).getDouble());
-	printf("\nresults: %f, %f\n", (a - t).getDouble(), (t - a).getDouble());
+	printf("\nresults: %f, %f\n", (a * b).getDouble(), (b * c).getDouble());
+	//printf("\nresults: %f, %f\n", (a - t).getDouble(), (t - a).getDouble());
 	//printf("\nresults: %f, %f, %f, %f\n", (t + c).getDouble(), (c + t).getDouble(), (a + d).getDouble(), (a + c).getDouble()); //correct
 
 	printf("%s, %f\n", a.toString().c_str(), a.getDouble());
