@@ -56,7 +56,7 @@ private:
 	u_char *mExp;
 	static const unsigned int mBias = (1 << (E * 8 - 1)) - 1;
 public:
-	static const int MAX = mBias;
+	static const int MAX = mBias + 1;
 	static const int MIN = -(int)mBias;
 
 	Exponent(int val=0);

@@ -193,7 +193,6 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator<<=(int shi
 //Value is assumed to be between 0 and 2
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double val) {
-	double save = val;
 	const double powerof2 = (double) (1 << 8);
 	val /= 2.;
 	for (int i = 0; i < M; ++i) {
@@ -201,7 +200,6 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(double va
 		mMantisse[i] = (char)(val);
 		val -= mMantisse[i];
 	}
-
 	return *this;
 }
 
@@ -222,6 +220,8 @@ bool BigFloat<M, E>::Mantisse::operator<(const Mantisse& m) const {
 	for (int i = 0; i < M; ++i) {
 		if (mMantisse[i] < m.mMantisse[i])
 			return true;
+		else if (mMantisse[i] > m.mMantisse[i])
+			return false;
 	}
 	return false;
 }
@@ -263,7 +263,7 @@ BigFloat<M, E>::BigFloat(BigFloat<M, E>&& b) :
 	printf("Moved %p into new object %p\n", &b, this);
 }
 
-// BigFloat -Copy operator
+// BigFloat - Copy operator
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(const BigFloat<M, E>& b) {
 	printf("Copying %p to %p\n", &b, this);
@@ -280,6 +280,26 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
 	mExp = std::move(b.mExp);
 	mMantisse = std::move(b.mMantisse);
 	mSgn = b.mSgn;
+	return *this;
+}
+
+template <int M, int E>
+BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
+	int exp = 0;
+	mSgn = d >= 0 ? 1 : -1;
+	d *= mSgn; //get absolute
+	//shift bits until d = 1.xxx
+	while (d < 1 && exp > Exponent::MIN) {
+		d *= 2.;
+		exp -= 1;
+	}
+	while (d >= 2 && exp < Exponent::MAX) {
+		d /= 2;
+		exp += 1;
+	}
+	mMantisse = d;
+	mExp = exp;
+
 	return *this;
 }
 
@@ -321,26 +341,6 @@ std::string BigFloat<M, E>::toString(int maxLen) const {
 }
 
 template <int M, int E>
-BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
-	int exp = 0;
-	mSgn = d >= 0 ? 1 : -1;
-	d *= mSgn; //get absolute
-	 //shift bits until d = 1.xxx
-	while (d < 1 && exp > Exponent::MIN) {
-		d *= 2.;
-		exp -= 1;
-	}
-	while (d >= 2 && exp < Exponent::MAX) {
-		d /= 2;
-		exp += 1;
-	}
-	mMantisse = d;
-	mExp = exp;
-
-	return *this;
-}
-
-template <int M, int E>
 BigFloat<M, E> BigFloat<M, E>::operator-() const {
 	BigFloat b(*this);
 	b.setSign(-mSgn);
@@ -379,15 +379,9 @@ template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator+= (const BigFloat<M, E>& b) {
 	if (mSgn == b.mSgn)
 		return addAbs(b);
-	else if (mSgn > b.mSgn) { // *this is positiv, b is negative
+	else // case 1 : this pos, b neg -> this + b = |this| - |b|,
+			// case 2: this neg, b pos -> this + b = -||this| - |b||
 		return subAbs(b);
-	} else {
-		BigFloat<M, E>* pTemp = new BigFloat<M, E>(*this);
-		*this = b;
-		*this -= *pTemp;
-		delete pTemp;
-		return *this;
-	}
 }
 
 //performs |*this| += |b|,  completely ignoring any signs
@@ -587,13 +581,18 @@ void checkMem() {
 
 int main() {
 	atexit(checkMem);
-	BigFloat<> a(3400.00031);
+	BigFloat<> a(340000.00031);
+	BigFloat<> t(-304234);
 	BigFloat<> b(1.003125);
 	BigFloat<> c(-0.01);
-	printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());
-	BigFloat<> t(-304234);
-	printf("BigFloat<> c  = -a\n");
+	BigFloat<> e(0.9734);
 	BigFloat<> d = -a;
+	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());  // correct
+
+	printf("\nresults: %f, %f\n", (a + t).getDouble(), (t + a).getDouble());
+	printf("\nresults: %f, %f\n", (a - t).getDouble(), (t - a).getDouble());
+	//printf("\nresults: %f, %f, %f, %f\n", (t + c).getDouble(), (c + t).getDouble(), (a + d).getDouble(), (a + c).getDouble()); //correct
+
 	printf("%s, %f\n", a.toString().c_str(), a.getDouble());
 	printf("%s, %f\n", b.toString().c_str(), b.getDouble());
 	printf("%s, %f\n", t.toString().c_str(), t.getDouble());
