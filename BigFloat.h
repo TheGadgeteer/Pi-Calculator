@@ -24,7 +24,10 @@ public:
 	BigFloat(BigFloat<M, E>&& b);
 	~BigFloat();
 
-	std::string toString(int maxLen = 100) const;
+	const Exponent& getExp() const { return mExp; }
+	const Mantisse& getMantisse() const { return mMantisse;  }
+
+	void BigFloat<M, E>::toString(char *out, int maxLen) const;
 	BigFloat<M, E>& operator= (double d);
 	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator= (BigFloat<M, E>&& b);

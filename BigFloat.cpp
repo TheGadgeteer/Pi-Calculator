@@ -303,41 +303,36 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 	return *this;
 }
 
-// a primitive attempt to convert the BigFloat into a String.
-// Maximum ten digits before the floating point.
+// Writes BigFloat as String into out.
+// maxLen: Max number of digits; excluding the string-ending '\0'.
 template <int M, int E>
-std::string BigFloat<M, E>::toString(int maxLen) const {
-	int exp = mExp.getVal();
-	std::string s = "";
-	if (mSgn < 0)
-		s += '-';
-	//first, convert part in front of the floating point
-	int numBits = 1 + exp;
-	if (numBits > 64)
-		numBits = 64;
-
-	if (numBits <= 0){
-		s += '0';
-	} else {
-		unsigned long long n = 0;
-		n = mMantisse[0];
-		numBits -= 8;
-		int i = 1;
-		while (numBits > 0) {
-			n <<= 8;
-			n |= mMantisse[i];
-			++i;
-			numBits -= 8;
-		}
-		n >>= -numBits;
-		
-		s += std::to_string(n);
+void BigFloat<M, E>::toString(char *out, int maxLen) const {
+	int exp = 0, idx = 0;  //exponent to BASE, idx: next free index in out array
+	const BigFloat<M, E> BASE = 10;
+	BigFloat<M, E> f(*this);
+	if (f.mSgn < 0) {
+		out[idx++] = '-';
 	}
-	//then the part after the dot
-	s += ".";
-	//TODO
-	s += "xxxx";
-	return s;
+	if ((int)f.mExp < 0) {
+		out[idx++] = '0';
+	} else {
+		do {
+			f /= BASE;
+			exp++;
+		} while ((int)f.mExp >= 0);
+	}
+	// Digits in front of point
+	while (idx < maxLen) {
+		f *= BASE;
+		out[idx++] = f.floor() + 48;
+		f.substractFloor();
+		if (exp >= 0) {  // exp-- only needed if exp is still >= 0.
+			if (exp == 0)
+				out[idx++] = '.';
+			exp--;
+		}
+	}
+	out[idx] = '\0';
 }
 
 template <int M, int E>
@@ -496,21 +491,16 @@ BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
 	printBits(b);
 	for (int i = M*8 - 1; i >= 0; --i) {
 		if (b.mMantisse.getBit(i)) {
-			printf("1");
 			mExp = midExp - i;
 			//result += *this;
 		}
-		else
-			printf("0");
 	}
-	printf("\n");
 	*this = std::move(result);
-	printf("result: \n");
 	if (mSgn != b.mSgn)
 		setSign(-1);
 	else
 		setSign(1);
-
+	printf("result: \n");
 	printBits(*this);
 	return *this;
 }
@@ -518,6 +508,8 @@ BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator/= (const BigFloat<M, E>& b) {
 	//TODO
+
+	return *this;
 }
 
 template <int M, int E>
@@ -629,24 +621,35 @@ void checkMem() {
 
 int main() {
 	BigFloat<> a(340000.00031);
-	BigFloat<> t(-304234);
-	BigFloat<> b(1.003125);
-	BigFloat<> c(-0.01);
-	BigFloat<> d(0.9734);
-	BigFloat<> e = -a;
-	printf("\n%f, %f, %f, %f, %f\n\n", a.substractFloor().getDouble(), t.substractFloor().getDouble(), 
-		b.substractFloor().getDouble(), c.substractFloor().getDouble(), d.substractFloor().getDouble());
+	BigFloat<> b(-304234);
+	BigFloat<> c(1.003125);
+	BigFloat<> d(-0.01);
+	BigFloat<> e(0.9734);
+	BigFloat<> f = -a;
+	printf("\n%f, %f, %f, %f, %f\n\n", a.substractFloor().getDouble(), b.substractFloor().getDouble(), 
+		c.substractFloor().getDouble(), d.substractFloor().getDouble(), e.substractFloor().getDouble());
 	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());  // correct
 
 	printf("\nresults: %f, %f\n", (a * b).getDouble(), (b * c).getDouble());
 	//printf("\nresults: %f, %f\n", (a - t).getDouble(), (t - a).getDouble());
 	//printf("\nresults: %f, %f, %f, %f\n", (t + c).getDouble(), (c + t).getDouble(), (a + d).getDouble(), (a + c).getDouble()); //correct
-
-	printf("%s, %f\n", a.toString().c_str(), a.getDouble());
-	printf("%s, %f\n", b.toString().c_str(), b.getDouble());
-	printf("%s, %f\n", t.toString().c_str(), t.getDouble());
-	printf("%s, %f\n", c.toString().c_str(), c.getDouble());
 	
+	return 0;
+	
+	char numbers[5][100];
+	/*a.toString(numbers[0], 100);
+	b.toString(numbers[0], 100);
+	c.toString(numbers[0], 100);
+	d.toString(numbers[0], 100);*/
+	e.toString(numbers[0], 100);
+
+	/*printf("%s, %f\n", numbers[0], a.getDouble());
+	printf("%s, %f\n", numbers[1], b.getDouble());
+	printf("%s, %f\n", numbers[2], c.getDouble());
+	printf("%s, %f\n", numbers[3], d.getDouble());*/
+	printf("%s, %f\n", numbers[4], e.getDouble());
+	
+
 	printf("\nEND\n\n");
 	return 0;
 }
