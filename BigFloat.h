@@ -59,7 +59,7 @@ public:
 
 	bool absSmallerThan(const BigFloat<M, E>& b) const;
 	BigFloat<M, E> abs() const;
-	double getDouble() const;
+	double toDouble() const;
 	int floor() const;
 	BigFloat<M, E>& substractFloor();  //needed for toString() function
 

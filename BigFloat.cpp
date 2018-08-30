@@ -361,13 +361,16 @@ BigFloat<M, E>& BigFloat<M, E>::assignFraction(long long numerator, long long de
 		sgn = -1;
 	}
 
-	int shift = 0;
 	*this = denominator;
-	BigFloat<> temp(*this);
+
 	// make ggt(denominator, 2) = 1
-	while (mMantisse.getBit((int)mExp) == 0)
-		mExp -= 1;
+	int exp = mExp;
+	while (mMantisse.getBit(exp) == 0)
+		exp--;
+	int shift = mExp - exp;
+	mExp = exp;
 	// find t so denominator*t = (2^p - 1)
+	BigFloat<> temp(*this);
 	int t = 1;
 	while(true) {
 		bool isOne = true;
@@ -384,15 +387,13 @@ BigFloat<M, E>& BigFloat<M, E>::assignFraction(long long numerator, long long de
 			*this += temp;
 		}
 	}
-	printf("2^p - 1: \n");
-	printBits(*this);
 	int p = (int)mExp + 1;
 	*this = numerator;
 	temp = t;
 	*this *= temp;
 	printf("periode %d, t %d, exp %d\n", p, t, (int)mExp);
 	*this >>= p;
-	if (p == 1 && mMantisse.getBit(0) == 1) {
+	if (p == 1 && mMantisse.getBit(0) == 1) {   // as 0.1111111... = 1.0
 		printf("correcting ..\n");
 		for (int i = 0; i < M; ++i)
 			mMantisse[i] = 0;
@@ -407,7 +408,7 @@ BigFloat<M, E>& BigFloat<M, E>::assignFraction(long long numerator, long long de
 				mMantisse.clearBit(i);
 		}
 	}
-	//mExp -= shift;
+	mExp -= shift;
 	mSgn = sgn;
 	return *this;
 }
@@ -649,7 +650,7 @@ BigFloat<M, E> BigFloat<M, E>::abs() const {
 }
 
 template<int M, int E>
-double BigFloat<M, E>::getDouble() const {
+double BigFloat<M, E>::toDouble() const {
 	double d = mSgn * mMantisse.getVal();
 	int exp = mExp.getVal();
 	while (exp > 0) {
@@ -699,7 +700,7 @@ void BigFloat<M, E>::setSign(int sgn) {
 
 template<int M, int E>
 void printBits(const BigFloat<M, E>& b) {
-	printf("%f:\t", b.getDouble());
+	printf("%f:\t", b.toDouble());
 	for (int x = 0; x < M; ++x) {
 		for (int i = 0; i < 8; ++i) {
 			printf("%i", (b.mMantisse[x] & (1 << (7 - i))) > 0);
@@ -723,11 +724,9 @@ void checkMem() {
 }
 
 int main() {
-	//printBits(BigFloat<>().assignFraction(-1, -3));
-	//printBits(BigFloat<>().assignFraction(-1, 97));
-	//printBits(BigFloat<>().assignFraction(1, -21));
-	printBits(BigFloat<>().assignFraction(1, 6));
-	printBits(BigFloat<>().assignFraction(1, 1));
+	for (int i = 1; i < 50; ++i) {
+		printf("\n%d: %f\n\n", i, BigFloat<>().assignFraction(1, i).toDouble());
+	}
 	return 0;
 	BigFloat<> a(340000.00031);
 	BigFloat<> b(-304234);
@@ -735,11 +734,11 @@ int main() {
 	BigFloat<> d(-0.01);
 	BigFloat<> e(0.9734);
 	BigFloat<> f = -a;
-	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).getDouble(), (b - a).getDouble(), (-b - -a).getDouble(), (-a - -b).getDouble());  // correct
+	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).toDouble(), (b - a).toDouble(), (-b - -a).toDouble(), (-a - -b).toDouble());  // correct
 
-	printf("\nresults: %f, %f\n", (a * b).getDouble(), (b * a).getDouble());
-	printf("\nresults: %f, %f\n", (d * d).getDouble(), (e * f).getDouble());
-	//printf("\nresults: %f, %f, %f, %f\n", (t + c).getDouble(), (c + t).getDouble(), (a + d).getDouble(), (a + c).getDouble()); //correct
+	printf("\nresults: %f, %f\n", (a * b).toDouble(), (b * a).toDouble());
+	printf("\nresults: %f, %f\n", (d * d).toDouble(), (e * f).toDouble());
+	//printf("\nresults: %f, %f, %f, %f\n", (t + c).toDouble(), (c + t).toDouble(), (a + d).toDouble(), (a + c).toDouble()); //correct
 
 	const int LEN = 20;
 	char numbers[5][LEN];
@@ -749,11 +748,11 @@ int main() {
 	d.toString(numbers[3], LEN);*/
 	e.toString(numbers[4], LEN);
 
-	/*printf("%s, %f\n", numbers[0], a.getDouble());
-	printf("%s, %f\n", numbers[1], b.getDouble());
-	printf("%s, %f\n", numbers[2], c.getDouble());
-	printf("%s, %f\n", numbers[3], d.getDouble());*/
-	printf("%s, %f\n", numbers[4], e.getDouble());
+	/*printf("%s, %f\n", numbers[0], a.toDouble());
+	printf("%s, %f\n", numbers[1], b.toDouble());
+	printf("%s, %f\n", numbers[2], c.toDouble());
+	printf("%s, %f\n", numbers[3], d.toDouble());*/
+	printf("%s, %f\n", numbers[4], e.toDouble());
 	
 
 	printf("\nEND\n\n");
