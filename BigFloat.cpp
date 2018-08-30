@@ -308,7 +308,6 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 
 template<int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(long long val) {
-	printf("long long Constructor called\n");
 	if (val < 0) {
 		mSgn = -1;
 		val = -val;
@@ -330,12 +329,6 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(long long val) {
 	}
 	while (i < M)
 		mMantisse[i++] = 0;
-	printf("%lld: ", val);
-	for (int i = 7; i >= 0; --i) {
-		printf("%d ", *(pVal + i));
-	}
-	printf("\n");
-	printBits(*this);
 	if (val == 0) {
 		mExp = Exponent::MIN;
 	} else {
@@ -346,21 +339,77 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(long long val) {
 		mMantisse <<= shift;
 		mExp -= shift;
 	}
-
-
 	return *this;
 }
 
+// |numerator| <= |denominator|;  nominator != 0, denominator != 0
+// ggt(numerator, denominator) = 1
 template<int M, int E>
-void BigFloat<M, E>::assignFraction(long long numerator, long long denominator) {
-	int shift = 0;
-	*this = denominator;
-	while ((int)numerator & 1 == 0) {
-		shift++;
-		numerator >>= 1;
+BigFloat<M, E>& BigFloat<M, E>::assignFraction(long long numerator, long long denominator) {
+	if (numerator == 0 || denominator == 0)
+		return *this;
+	int sgn = 1;
+	if (numerator < 0) {
+		numerator = -numerator;
+		if (denominator < 0) {
+			denominator = -denominator;
+		} else {
+				sgn = -1;
+		}
+	} else if (denominator < 0) {
+		denominator = -denominator;
+		sgn = -1;
 	}
 
-
+	int shift = 0;
+	*this = denominator;
+	BigFloat<> temp(*this);
+	// make ggt(denominator, 2) = 1
+	while (mMantisse.getBit((int)mExp) == 0)
+		mExp -= 1;
+	// find t so denominator*t = (2^p - 1)
+	int t = 1;
+	while(true) {
+		bool isOne = true;
+		for (int i = 0; i <= (int)mExp; ++i) {
+			if (mMantisse.getBit(i) != 1) {
+				isOne = false;
+				break;
+			}
+		}
+		if (isOne) {
+			break;
+		} else {
+			t++;
+			*this += temp;
+		}
+	}
+	printf("2^p - 1: \n");
+	printBits(*this);
+	int p = (int)mExp + 1;
+	*this = numerator;
+	temp = t;
+	*this *= temp;
+	printf("periode %d, t %d, exp %d\n", p, t, (int)mExp);
+	*this >>= p;
+	if (p == 1 && mMantisse.getBit(0) == 1) {
+		printf("correcting ..\n");
+		for (int i = 0; i < M; ++i)
+			mMantisse[i] = 0;
+		mMantisse.setBit(0);
+		mExp += 1;
+	}
+	else {
+		for (int i = p; i < M * 8; ++i) {
+			if (mMantisse.getBit(i - p))
+				mMantisse.setBit(i);
+			else
+				mMantisse.clearBit(i);
+		}
+	}
+	//mExp -= shift;
+	mSgn = sgn;
+	return *this;
 }
 
 // Writes BigFloat as String into out.
@@ -674,6 +723,12 @@ void checkMem() {
 }
 
 int main() {
+	//printBits(BigFloat<>().assignFraction(-1, -3));
+	//printBits(BigFloat<>().assignFraction(-1, 97));
+	//printBits(BigFloat<>().assignFraction(1, -21));
+	printBits(BigFloat<>().assignFraction(1, 6));
+	printBits(BigFloat<>().assignFraction(1, 1));
+	return 0;
 	BigFloat<> a(340000.00031);
 	BigFloat<> b(-304234);
 	BigFloat<> c(1.003125);

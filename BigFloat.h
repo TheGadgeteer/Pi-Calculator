@@ -30,11 +30,11 @@ public:
 	char getSign() { return mSgn; }
 	void setSign(int sgn);
 
-	void assignFraction(long long numerator, long long denominator);
+	BigFloat<M, E>& assignFraction(long long numerator, long long denominator);
 	void BigFloat<M, E>::toString(char *out, int maxLen) const;
 	BigFloat<M, E>& operator= (double d);
 	BigFloat<M, E>& operator= (long long val);
-	BigFloat<M, E>& operator= (int val) { return operator=(val); }
+	BigFloat<M, E>& operator= (int val) { return operator=((long long)val); }
 	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator= (BigFloat<M, E>&& b);
 	BigFloat<M, E> operator- () const;
@@ -46,8 +46,8 @@ public:
 	BigFloat<M, E>& operator-= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator*= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator/= (const BigFloat<M, E>& b);
-	BigFloat<M, E>& operator<<= (int shift) { mExp += shift; }
-	BigFloat<M, E>& operator>>= (int shift) { mExp -= shift; }
+	BigFloat<M, E>& operator<<= (int shift) { mExp += shift; return *this; }
+	BigFloat<M, E>& operator>>= (int shift) { mExp -= shift; return *this; }
 	bool operator< (const BigFloat<M, E>& b) const;
 	bool operator> (const BigFloat<M, E>& b) const { return (b < *this); }
 	bool operator== (const BigFloat<M, E>& b) const;
