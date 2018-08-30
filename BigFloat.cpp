@@ -391,10 +391,8 @@ BigFloat<M, E>& BigFloat<M, E>::assignFraction(long long numerator, long long de
 	*this = numerator;
 	temp = t;
 	*this *= temp;
-	printf("periode %d, t %d, exp %d\n", p, t, (int)mExp);
 	*this >>= p;
 	if (p == 1 && mMantisse.getBit(0) == 1) {   // as 0.1111111... = 1.0
-		printf("correcting ..\n");
 		for (int i = 0; i < M; ++i)
 			mMantisse[i] = 0;
 		mMantisse.setBit(0);
@@ -611,8 +609,32 @@ BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator/= (const BigFloat<M, E>& b) {
-	//TODO
-
+	BigFloat<M, E> result(1);   // 2^(a-b+1) > result > 2^(a-b-1), d.h.:  result.mExp = (a-b)
+	result.setSign(mSgn == b.mSgn ? 1 : -1);
+	result.mExp = mExp.getVal() - b.mExp.getVal();
+	BigFloat<M, E> bAdded = 0;  //bAdded += b*(2^result.mExp)
+	bAdded.mExp = 0;
+	//printf("result exp: %d\t same base: \n", (int)result.mExp);
+	//printBits(bAdded);
+	// test all exp if bAdded + b*exp <= b
+	for (int i = 0; i < M*8; ++i) {
+		bAdded >>= (int)result.mExp - i;
+		bAdded += b;        // bAdded += b*(2^(result.mExp - 1)
+		bAdded <<= (int)result.mExp - i;
+		//printBits(bAdded);
+		if (bAdded > *this) {
+			bAdded >>= (int)result.mExp - i;
+			bAdded -= b;
+			bAdded <<= (int)result.mExp - i;
+		} else {
+			result.mMantisse.setBit(i);
+			//printf("\tapproved; exp this: %d, exp bAdded: %d\n",
+			//	(int)this->mExp, (int)bAdded.mExp);
+			if (bAdded == *this)
+				break;
+		}
+	}
+	*this = std::move(result);
 	return *this;
 }
 
@@ -724,35 +746,38 @@ void checkMem() {
 }
 
 int main() {
-	for (int i = 1; i < 50; ++i) {
-		printf("\n%d: %f\n\n", i, BigFloat<>().assignFraction(1, i).toDouble());
-	}
-	return 0;
-	BigFloat<> a(340000.00031);
-	BigFloat<> b(-304234);
-	BigFloat<> c(1.003125);
-	BigFloat<> d(-0.01);
-	BigFloat<> e(0.9734);
+	BigFloat<> a(34);
+	BigFloat<> b(17.541);
+	BigFloat<> c(0.0051);
+	BigFloat<> d(2.5464);
+	BigFloat<> e(3);
 	BigFloat<> f = -a;
-	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).toDouble(), (b - a).toDouble(), (-b - -a).toDouble(), (-a - -b).toDouble());  // correct
-
-	printf("\nresults: %f, %f\n", (a * b).toDouble(), (b * a).toDouble());
-	printf("\nresults: %f, %f\n", (d * d).toDouble(), (e * f).toDouble());
-	//printf("\nresults: %f, %f, %f, %f\n", (t + c).toDouble(), (c + t).toDouble(), (a + d).toDouble(), (a + c).toDouble()); //correct
+	/*
+	printBits(c / d);
+	printBits(d / e);
+	printBits(a / b);
+	printBits(d / d);*/
 
 	const int LEN = 20;
 	char numbers[5][LEN];
-	/*a.toString(numbers[0], LEN);
+	a.toString(numbers[0], LEN);
 	b.toString(numbers[1], LEN);
 	c.toString(numbers[2], LEN);
-	d.toString(numbers[3], LEN);*/
+	d.toString(numbers[3], LEN);
 	e.toString(numbers[4], LEN);
-
-	/*printf("%s, %f\n", numbers[0], a.toDouble());
+	printf("%s, %f\n", numbers[0], a.toDouble());
 	printf("%s, %f\n", numbers[1], b.toDouble());
 	printf("%s, %f\n", numbers[2], c.toDouble());
-	printf("%s, %f\n", numbers[3], d.toDouble());*/
+	printf("%s, %f\n", numbers[3], d.toDouble());
 	printf("%s, %f\n", numbers[4], e.toDouble());
+
+	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).toDouble(), (b - a).toDouble(), (-b - -a).toDouble(), (-a - -b).toDouble());  // correct
+
+	//printf("\nresults: %f, %f\n", (a * b).toDouble(), (b * a).toDouble());
+	//printf("\nresults: %f, %f\n", (d * d).toDouble(), (e * f).toDouble());
+	//printf("\nresults: %f, %f, %f, %f\n", (t + c).toDouble(), (c + t).toDouble(), (a + d).toDouble(), (a + c).toDouble()); //correct
+
+
 	
 
 	printf("\nEND\n\n");

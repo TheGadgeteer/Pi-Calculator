@@ -17,6 +17,7 @@ private:
 
 	BigFloat<M, E>& BigFloat<M, E>::addAbs(const BigFloat<M, E>& b);
 	BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b);
+
 public:
 	BigFloat(double init=0.);
 	BigFloat(long long init) { *this = init; }
@@ -84,15 +85,15 @@ public:
 	Exponent& operator=(const Exponent& e);
 	Exponent& operator=(Exponent&& e);
 	Exponent& operator+=(int i);
-	Exponent& operator+=(const Exponent& e) { *this += e.getVal(); }
+	Exponent& operator+=(const Exponent& e) { return *this += e.getVal(); }
 	Exponent& operator-=(int i);
-	Exponent& operator-=(const Exponent& e) { *this += e.getVal(); }
+	Exponent& operator-=(const Exponent& e) { return *this += e.getVal(); }
 	bool operator<(const Exponent& e) const;
-	bool operator>(const Exponent& e) const {return e < *this;}
+	bool operator>(const Exponent& e) const { return e < *this;}
 	bool operator==(const Exponent& e) const;
-	bool operator!=(const Exponent& e) const {return !(*this == e);}
-	bool operator<=(const Exponent& e) const {return *this < e || *this == e;}
-	bool operator>=(const Exponent& e) const {return *this > e || *this == e;}
+	bool operator!=(const Exponent& e) const { return !(*this == e);}
+	bool operator<=(const Exponent& e) const { return *this < e || *this == e;}
+	bool operator>=(const Exponent& e) const { return *this > e || *this == e;}
 	operator int() const { return this->getVal(); }
 
 	int getVal() const;
@@ -100,7 +101,7 @@ public:
 
 // Only takes Values in [0, 2). Stored in Big Endian. Format:  x.xxxxx
 template <int M, int E>
-class BigFloat<M, E>::Mantisse{
+class BigFloat<M, E>::Mantisse {
 	friend class BigFloat;
 private:
 	u_char *mMantisse;
@@ -109,6 +110,7 @@ private:
 	Mantisse& operator<<=(int shift);
 
 public:
+
 	Mantisse(double val=0.);
 	Mantisse(const Mantisse& m);
 	Mantisse(Mantisse&& m);
