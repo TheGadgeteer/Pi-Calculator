@@ -19,6 +19,8 @@ private:
 	BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b);
 public:
 	BigFloat(double init=0.);
+	BigFloat(long long init) { *this = init; }
+	BigFloat(int init) : BigFloat((long long)init) {}
 	BigFloat(const BigFloat<M, E>& b);
 	BigFloat(BigFloat<M, E>&& b);
 	~BigFloat();
@@ -31,6 +33,8 @@ public:
 	void assignFraction(long long numerator, long long denominator);
 	void BigFloat<M, E>::toString(char *out, int maxLen) const;
 	BigFloat<M, E>& operator= (double d);
+	BigFloat<M, E>& operator= (long long val);
+	BigFloat<M, E>& operator= (int val) { return operator=(val); }
 	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator= (BigFloat<M, E>&& b);
 	BigFloat<M, E> operator- () const;

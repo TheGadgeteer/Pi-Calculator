@@ -307,7 +307,59 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 }
 
 template<int M, int E>
+BigFloat<M, E>& BigFloat<M, E>::operator=(long long val) {
+	printf("long long Constructor called\n");
+	if (val < 0) {
+		mSgn = -1;
+		val = -val;
+	} else {
+		mSgn = 1;
+	}
+	u_char *pVal = (u_char*)&val;
+	int i = 0;
+	int shift = 63;
+	for (int n = 7; n >= 0; --n) {
+		u_char c = *(pVal + n);
+		if (c == 0 && i == 0) { 
+			shift -= 8;
+		} else {
+			mMantisse[i++] = c;
+			if (i >= M)
+				break;
+		}
+	}
+	while (i < M)
+		mMantisse[i++] = 0;
+	printf("%lld: ", val);
+	for (int i = 7; i >= 0; --i) {
+		printf("%d ", *(pVal + i));
+	}
+	printf("\n");
+	printBits(*this);
+	if (val == 0) {
+		mExp = Exponent::MIN;
+	} else {
+		mExp = shift;
+		shift = 0;
+		while (mMantisse.getBit(shift) == 0)
+			shift++;
+		mMantisse <<= shift;
+		mExp -= shift;
+	}
+
+
+	return *this;
+}
+
+template<int M, int E>
 void BigFloat<M, E>::assignFraction(long long numerator, long long denominator) {
+	int shift = 0;
+	*this = denominator;
+	while ((int)numerator & 1 == 0) {
+		shift++;
+		numerator >>= 1;
+	}
+
 
 }
 
@@ -621,7 +673,7 @@ void checkMem() {
 	//system("pause");
 }
 
-int xmain() {
+int main() {
 	BigFloat<> a(340000.00031);
 	BigFloat<> b(-304234);
 	BigFloat<> c(1.003125);
