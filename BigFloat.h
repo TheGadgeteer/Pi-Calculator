@@ -15,7 +15,6 @@ private:
 	Exponent mExp;
 	Mantisse mMantisse;
 
-	void setSign(int sgn);
 	BigFloat<M, E>& BigFloat<M, E>::addAbs(const BigFloat<M, E>& b);
 	BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b);
 public:
@@ -26,7 +25,10 @@ public:
 
 	const Exponent& getExp() const { return mExp; }
 	const Mantisse& getMantisse() const { return mMantisse;  }
+	char getSign() { return mSgn; }
+	void setSign(int sgn);
 
+	void assignFraction(long long numerator, long long denominator);
 	void BigFloat<M, E>::toString(char *out, int maxLen) const;
 	BigFloat<M, E>& operator= (double d);
 	BigFloat<M, E>& operator= (const BigFloat<M, E>& b);
@@ -40,6 +42,8 @@ public:
 	BigFloat<M, E>& operator-= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator*= (const BigFloat<M, E>& b);
 	BigFloat<M, E>& operator/= (const BigFloat<M, E>& b);
+	BigFloat<M, E>& operator<<= (int shift) { mExp += shift; }
+	BigFloat<M, E>& operator>>= (int shift) { mExp -= shift; }
 	bool operator< (const BigFloat<M, E>& b) const;
 	bool operator> (const BigFloat<M, E>& b) const { return (b < *this); }
 	bool operator== (const BigFloat<M, E>& b) const;

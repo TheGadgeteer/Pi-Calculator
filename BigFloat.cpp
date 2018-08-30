@@ -306,6 +306,11 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(double d) {
 	return *this;
 }
 
+template<int M, int E>
+void BigFloat<M, E>::assignFraction(long long numerator, long long denominator) {
+
+}
+
 // Writes BigFloat as String into out.
 // maxLen: Max number of digits including the string-ending '\0'.
 template <int M, int E>
@@ -616,7 +621,7 @@ void checkMem() {
 	//system("pause");
 }
 
-int main() {
+int xmain() {
 	BigFloat<> a(340000.00031);
 	BigFloat<> b(-304234);
 	BigFloat<> c(1.003125);
