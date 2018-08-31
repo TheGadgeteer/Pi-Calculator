@@ -435,11 +435,8 @@ void BigFloat<M, E>::toString(char *out, int maxLen) const {
 
 	while (idx < maxLen - 1) {
 		f *= BASE;
-		printBits(f);
 		out[idx++] = f.floor() + 48;
-		printf("floor: %d, ", f.floor());
 		f.substractFloor();
-		printf(", without floor: %f\n\n", f.toDouble());
 		if (exp >= 0) {  // exp-- only needed if exp is still >= 0.
 			if (exp == 0)
 				out[idx++] = '.';
@@ -600,8 +597,6 @@ BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b) {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
-	printf("multiplying with 10: \n\t\t");
-	printBits(*this);
 	BigFloat<M, E> result(0.);
 	result.setSign(mSgn == b.mSgn ? 1 : -1);
 	int midExp = mExp.getVal() + b.mExp.getVal();
@@ -609,11 +604,23 @@ BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
 		if (b.mMantisse.getBit(i)) {
 			mExp = midExp - i;
 			result.addAbs(*this);
-			printf("\t\t");
-			printBits(result);
 		}
 	}
 	*this = std::move(result);
+	// take care of 0.1111 = 1.0 case
+	bool isOne = true;
+	for (int i = 0; i < M - 1; ++i) {
+		if (mMantisse[i] != 0xff) {
+			isOne = false;
+			break;
+		}
+	}
+	if (isOne) {
+		for (int i = 0; i < M; ++i)
+			mMantisse[i] = 0;
+		mMantisse.setBit(0);
+		mExp += 1;
+	}
 	return *this;
 }
 
@@ -795,16 +802,16 @@ int main() {
 	const int LEN = 10;
 	char numbers[5][LEN];
 	a.toString(numbers[0], LEN);
-	/*b.toString(numbers[1], LEN);
+	b.toString(numbers[1], LEN);
 	c.toString(numbers[2], LEN);
 	d.toString(numbers[3], LEN);
-	e.toString(numbers[4], LEN);*/
+	e.toString(numbers[4], LEN);
 	printf("%s, %f\n", numbers[0], a.toDouble());
-	/*printf("%s, %f\n", numbers[1], b.toDouble());
+	printf("%s, %f\n", numbers[1], b.toDouble());
 	printf("%s, %f\n", numbers[2], c.toDouble());
 	printf("%s, %f\n", numbers[3], d.toDouble());
 	printf("%s, %f\n", numbers[4], e.toDouble());
-	*/
+	
 	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).toDouble(), (b - a).toDouble(), (-b - -a).toDouble(), (-a - -b).toDouble());  // correct
 
 	//printf("\nresults: %f, %f\n", (a * b).toDouble(), (b * a).toDouble());
