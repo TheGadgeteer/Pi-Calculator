@@ -5,7 +5,7 @@
 
 template <int M, int E>
 BigFloat<M, E>::Exponent::Exponent(int val) {
-	printf("\tConstructor of Exponent %p was called\n", this);
+	//printf("\tConstructor of Exponent %p was called\n", this);
 	mExp = new u_char[E];
 	*this = val;
 }
@@ -14,7 +14,7 @@ BigFloat<M, E>::Exponent::Exponent(int val) {
 template <int M, int E>
 BigFloat<M, E>::Exponent::Exponent(const Exponent& e) 
 {
-	printf("\tCopying Exponent %p in new object %p\n", &e, this);
+	//printf("\tCopying Exponent %p in new object %p\n", &e, this);
 	mExp = new u_char[E];
 	memcpy(mExp, e.mExp, E);
 }
@@ -23,7 +23,7 @@ BigFloat<M, E>::Exponent::Exponent(const Exponent& e)
 template <int M, int E>
 BigFloat<M, E>::Exponent::Exponent(Exponent&& e)
 {
-	printf("\tMoving Exponent %p in new object %p\n", &e, this);
+	//printf("\tMoving Exponent %p in new object %p\n", &e, this);
 	mExp = e.mExp;
 	e.mExp = nullptr;
 }
@@ -31,7 +31,7 @@ BigFloat<M, E>::Exponent::Exponent(Exponent&& e)
 //Copy operator
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(const Exponent& e) {
-	printf("\tCopying Exponent %p to %p\n", &e, this);
+	//printf("\tCopying Exponent %p to %p\n", &e, this);
 	memcpy(mExp, e.mExp, E);
 	return *this;
 }
@@ -39,7 +39,7 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(const Exp
 //Move operator
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(Exponent&& e) {
-	printf("\tMoving Exponent %p to %p\n", &e, this);
+	//printf("\tMoving Exponent %p to %p\n", &e, this);
 	delete[] mExp;
 	mExp = e.mExp;
 	e.mExp = nullptr;
@@ -57,13 +57,14 @@ typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator=(int val) 
 
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator+=(int i) {
-	*this = i + getVal();
-	return *this;
+	int x = i + getVal();
+	return *this = x < MIN ? MIN : (x > MAX ? MAX : x);
 }
 
 template <int M, int E>
 typename BigFloat<M, E>::Exponent& BigFloat<M, E>::Exponent::operator-=(int i) {
-	return *this = getVal() - i;
+	int x  = getVal() - i;
+	return *this = x < MIN ? MIN : (x > MAX ? MAX : x);
 }
 
 template <int M, int E>
@@ -97,7 +98,7 @@ int BigFloat<M, E>::Exponent::getVal() const {
 // Mantisse - Constructor
 template <int M, int E>
 BigFloat<M, E>::Mantisse::Mantisse(double val) {
-	printf("\tConstructor of Mantisse %p was called\n", this);
+	//printf("\tConstructor of Mantisse %p was called\n", this);
 	mMantisse = new u_char[M];
 	*this = val;
 }
@@ -105,7 +106,7 @@ BigFloat<M, E>::Mantisse::Mantisse(double val) {
 // Mantisse - Copy Constructor
 template <int M, int E>
 BigFloat<M, E>::Mantisse::Mantisse(const Mantisse& m) {
-	printf("\tCopying Mantisse %p into new Object %p\n", &m, this);
+	//printf("\tCopying Mantisse %p into new Object %p\n", &m, this);
 	mMantisse = new u_char[M];
 	memcpy(mMantisse, m.mMantisse, M);
 }
@@ -113,7 +114,7 @@ BigFloat<M, E>::Mantisse::Mantisse(const Mantisse& m) {
 // Mantisse - Move Constructor
 template <int M, int E>
 BigFloat<M, E>::Mantisse::Mantisse(Mantisse&& m) {
-	printf("\tMoving Mantisse %p into new object %p\n", &m, this);
+	//printf("\tMoving Mantisse %p into new object %p\n", &m, this);
 	mMantisse = m.mMantisse;
 	m.mMantisse = nullptr;
 }
@@ -121,7 +122,7 @@ BigFloat<M, E>::Mantisse::Mantisse(Mantisse&& m) {
 //Mantisse - Copy Operator
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(const Mantisse& m) {
-	printf("\tCopying Mantisse %p to %p\n", &m, this);
+	//printf("\tCopying Mantisse %p to %p\n", &m, this);
 	memcpy(mMantisse, m.mMantisse, M);
 	return *this;
 }
@@ -129,7 +130,7 @@ typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(const Man
 //Mantisse - Move Operator
 template <int M, int E>
 typename BigFloat<M, E>::Mantisse& BigFloat<M, E>::Mantisse::operator=(Mantisse&& m) {
-		printf("\tMoving Mantisse %p to %p\n", &m, this);
+		//printf("\tMoving Mantisse %p to %p\n", &m, this);
 		delete[] mMantisse;
 		mMantisse = m.mMantisse;
 		m.mMantisse = nullptr;
@@ -242,13 +243,13 @@ bool BigFloat<M, E>::Mantisse::operator==(const Mantisse& m) const {
 
 template <int M, int E>
 BigFloat<M, E>::BigFloat(double initVal) {
-	printf("Constructor for BigFloat %p was called\n", this);
+	//printf("Constructor for BigFloat %p was called\n", this);
 	operator=(initVal);
 }
 
 template <int M, int E>
 BigFloat<M, E>::~BigFloat() {
-	printf("Destructor for BigFloat %p was called\n", this);
+	//printf("Destructor for BigFloat %p was called\n", this);
 }
 
 
@@ -256,20 +257,20 @@ BigFloat<M, E>::~BigFloat() {
 template <int M, int E>
 BigFloat<M, E>::BigFloat(const BigFloat<M, E>& b) :
 	mExp(b.mExp), mMantisse(b.mMantisse), mSgn(b.mSgn) {
-		printf("Copied %p into new object %p\n", &b, this);
+		//printf("Copied %p into new object %p\n", &b, this);
 }
 
 //  BigFloat - Move constructor
 template<int M, int E>
 BigFloat<M, E>::BigFloat(BigFloat<M, E>&& b) :
 	mExp(std::move(b.mExp)), mMantisse(std::move(b.mMantisse)), mSgn(b.mSgn) {
-	printf("Moved %p into new object %p\n", &b, this);
+	//printf("Moved %p into new object %p\n", &b, this);
 }
 
 // BigFloat - Copy operator
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(const BigFloat<M, E>& b) {
-	printf("Copying %p to %p\n", &b, this);
+	//printf("Copying %p to %p\n", &b, this);
 	mExp = b.mExp;
 	mMantisse = b.mMantisse;
 	mSgn = b.mSgn;
@@ -279,7 +280,7 @@ BigFloat<M, E>& BigFloat<M, E>::operator=(const BigFloat<M, E>& b) {
 // BigFloat - Move operator
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator=(BigFloat<M, E>&& b)  {
-	printf("Moving %p to %p\n", &b, this);
+	//printf("Moving %p to %p\n", &b, this);
 	mExp = std::move(b.mExp);
 	mMantisse = std::move(b.mMantisse);
 	mSgn = b.mSgn;
@@ -609,30 +610,48 @@ BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator/= (const BigFloat<M, E>& b) {
-	BigFloat<M, E> result(1);   // 2^(a-b+1) > result > 2^(a-b-1), d.h.:  result.mExp = (a-b)
-	result.setSign(mSgn == b.mSgn ? 1 : -1);
+	BigFloat<M, E> result(1);   // 2^(a-b+1) > rresult > 2^(a-b-1), d.h.:  result.mExp = (a-b)
+	if (mSgn != b.mSgn)
+		result.setSign(-1);
 	result.mExp = mExp.getVal() - b.mExp.getVal();
-	BigFloat<M, E> bAdded = 0;  //bAdded += b*(2^result.mExp)
-	bAdded.mExp = 0;
-	//printf("result exp: %d\t same base: \n", (int)result.mExp);
+	
+	//printf("calculating a / b:\n\t");
+	//printBits(*this);
+	//printf("\t");
+	//printBits(b);
+	// test if this is zero
+	if ((int)mExp == Exponent::MIN && mMantisse[0] == 0)
+		return *this = 0;
+	BigFloat<M, E> bAdded = b;
+	bAdded.setSign(1);
+	this->setSign(1);
+	bAdded.mExp += result.mExp;
+	if (bAdded > *this) {
+		result.mExp -= 1;
+		bAdded.mExp -= 1;
+	}
+	//printf("first: ");
 	//printBits(bAdded);
 	// test all exp if bAdded + b*exp <= b
-	for (int i = 0; i < M*8; ++i) {
+	for (int i = 1; i < M*8; ++i) {
 		bAdded >>= (int)result.mExp - i;
-		bAdded += b;        // bAdded += b*(2^(result.mExp - 1)
+		bAdded.addAbs(b);        // bAdded += b*(2^(result.mExp - 1)
 		bAdded <<= (int)result.mExp - i;
+		//printf("bit %d: \n\tbefore: ", i);
 		//printBits(bAdded);
 		if (bAdded > *this) {
 			bAdded >>= (int)result.mExp - i;
-			bAdded -= b;
+			bAdded.subAbs(b);
 			bAdded <<= (int)result.mExp - i;
+			//printf("discarded\n");
 		} else {
 			result.mMantisse.setBit(i);
-			//printf("\tapproved; exp this: %d, exp bAdded: %d\n",
-			//	(int)this->mExp, (int)bAdded.mExp);
+			//printf("approved\n");
 			if (bAdded == *this)
 				break;
 		}
+		//printf("\tafter: ");
+		//printBits(bAdded);
 	}
 	*this = std::move(result);
 	return *this;
@@ -664,6 +683,7 @@ template <int M, int E>
 bool BigFloat<M, E>::absSmallerThan(const BigFloat<M, E>& b) const {
 	return mExp < b.mExp || (mExp == b.mExp && mMantisse < b.mMantisse);
 }
+
 template <int M, int E>
 BigFloat<M, E> BigFloat<M, E>::abs() const {
 	BigFloat b(*this);
@@ -746,17 +766,19 @@ void checkMem() {
 }
 
 int main() {
-	BigFloat<> a(34);
+	BigFloat<> a(340000);
 	BigFloat<> b(17.541);
-	BigFloat<> c(0.0051);
+	BigFloat<> c(-0.000051);
 	BigFloat<> d(2.5464);
 	BigFloat<> e(3);
 	BigFloat<> f = -a;
-	/*
-	printBits(c / d);
-	printBits(d / e);
-	printBits(a / b);
-	printBits(d / d);*/
+
+	printBits(c / b);
+	printBits(a / e);
+	printBits(a / b); 
+	printBits(c / c);
+	printBits(f / d);
+	printBits(c / f);
 
 	const int LEN = 20;
 	char numbers[5][LEN];
