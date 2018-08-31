@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <crtdbg.h>
-
-typedef double BigFloat;
+#include "BigFloat.h"
 
 using namespace std;
 
@@ -27,45 +26,49 @@ int findDiff(char* str1, char* str2) {
 }
 
 
-int pi_main(int argc, char** argv) {
+int main(int argc, char** argv) {
 	int curAccuracy = 0, maxAccuracy = 0xffffff;
-	BigFloat pi(0), x;
+	BigFloat<20, 2> pi(0), x;
+	int sgn = 1;
 	char *last_pi_str = new char[1000], *pi_str = new char[1000];
 	last_pi_str[0] = 0;
 	if (argc > 1)
 		maxAccuracy = atoi(argv[1]);
 	printf("PI: \n");
-	int val = 4;
 	for (int n = 1; curAccuracy < maxAccuracy; n += 2) {
-		x = val;
-		x /= n;
+		x.assignFraction(1, n);
+		x <<= 2;  // x *= 4
+		sgn = -sgn;
+		x.setSign(sgn);
 		pi += x;
-		val *= -1;
 
 		swapPointers(&last_pi_str, &pi_str);
-		sprintf_s(pi_str, 999, "%f", pi);
+		pi.toString(pi_str, curAccuracy + 2);
 		curAccuracy = findDiff(last_pi_str, pi_str);
-		printf("\r%s, \t Accuracy: %d decimals", pi_str, curAccuracy);
+		printf("\rAccuracy: %d decimals, n = %d:\t%s", curAccuracy, n, pi_str);
 	}
 	return 0;
 }
 
+/*
 int exp_main(int argc, char** argv) {
 	int curAccuracy = 0, maxAccuracy = 0xffffff;
-	BigFloat e(1), x(1);
+	BigFloat<> e(1), x(1), nInv;
 	char *last_e_str = new char[1000], *e_str = new char[1000];
 	last_e_str[0] = 0;
 	if (argc > 1)
 		maxAccuracy = atoi(argv[1]);
 	printf("eulersche Zahl: \n");
 	for (int n = 1; curAccuracy < maxAccuracy; n++) {
-		x /= n;
-		e = e + x;
+		nInv.assignFraction(1, n);
+		x *= nInv;
+		e += x;
 
 		swapPointers(&last_e_str, &e_str);
-		sprintf_s(e_str, 999, "%f", e);
+		e.toString(e_str, curAccuracy + 2);
 		curAccuracy = findDiff(last_e_str, e_str);
-		printf("\r%s, \t Accuracy: %d decimals", e_str, curAccuracy);
+		printf("\rAccuracy: %d decimals, n = %d:  %s\t", curAccuracy, n, e_str);
 	}
 	return 0;
 }
+*/

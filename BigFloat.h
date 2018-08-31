@@ -1,5 +1,5 @@
 // Float type with Exponent Bias Shift, Normalized Mantisse. The leading 1 is kept. Saved in Big Endian.
-#include <string.h>
+#include <string>
 
 typedef unsigned char u_char;
 
@@ -55,7 +55,7 @@ public:
 	bool operator!= (const BigFloat<M, E>& b) const { return !(operator==(b)); }
 	bool operator<= (const BigFloat<M, E>& b) const { return (operator<(b) || operator==(b));}
 	bool operator>= (const BigFloat<M, E>& b) const { return (operator>(b) || operator==(b));}
-	operator double() const { return this->getDouble(); }
+	operator double() const { return this->toDouble(); }
 	operator int() const { return this->floor(); }
 
 	bool absSmallerThan(const BigFloat<M, E>& b) const;
@@ -136,3 +136,6 @@ public:
 
 	double getVal() const;
 };
+
+
+#include "BigFloat_Implements.h"
