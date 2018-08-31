@@ -421,6 +421,7 @@ void BigFloat<M, E>::toString(char *out, int maxLen) const {
 	BigFloat<M, E> f(*this);
 	if (f.mSgn < 0) {
 		out[idx++] = '-';
+		f.mSgn = 1;
 	}
 	if ((int)f.mExp < 0) {
 		out[idx++] = '0';
@@ -431,14 +432,18 @@ void BigFloat<M, E>::toString(char *out, int maxLen) const {
 			exp++;
 		} while ((int)f.mExp >= 0);
 	}
-	// Digits in front of point
+
 	while (idx < maxLen - 1) {
 		f *= BASE;
+		printBits(f);
 		out[idx++] = f.floor() + 48;
+		printf("floor: %d, ", f.floor());
 		f.substractFloor();
+		printf(", without floor: %f\n\n", f.toDouble());
 		if (exp >= 0) {  // exp-- only needed if exp is still >= 0.
 			if (exp == 0)
 				out[idx++] = '.';
+			out[idx] = 0;
 			exp--;
 		}
 	}
@@ -595,6 +600,8 @@ BigFloat<M, E>& BigFloat<M, E>::subAbs(const BigFloat<M, E>& b) {
 
 template <int M, int E>
 BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
+	printf("multiplying with 10: \n\t\t");
+	printBits(*this);
 	BigFloat<M, E> result(0.);
 	result.setSign(mSgn == b.mSgn ? 1 : -1);
 	int midExp = mExp.getVal() + b.mExp.getVal();
@@ -602,6 +609,8 @@ BigFloat<M, E>& BigFloat<M, E>::operator*= (const BigFloat<M, E>& b) {
 		if (b.mMantisse.getBit(i)) {
 			mExp = midExp - i;
 			result.addAbs(*this);
+			printf("\t\t");
+			printBits(result);
 		}
 	}
 	*this = std::move(result);
@@ -729,6 +738,15 @@ BigFloat<M, E>& BigFloat<M, E>::substractFloor() {
 		mMantisse <<= exp + 1;
 		mExp = -1;
 	}
+	int shift = 0;
+	while (mMantisse.getBit(shift) == 0 && shift < M * 8)
+		shift++;
+	if (shift < M * 8) {
+		mMantisse <<= shift;
+		mExp -= shift;
+	} else {
+		mExp = Exponent::MIN;
+	}
 	return *this;
 }
 
@@ -766,33 +784,27 @@ void checkMem() {
 }
 
 int main() {
-	BigFloat<> a(340000);
-	BigFloat<> b(17.541);
-	BigFloat<> c(-0.000051);
+	BigFloat<> a(340);
+	BigFloat<> b(-0.000051);
+	BigFloat<> c(17.451);
 	BigFloat<> d(2.5464);
 	BigFloat<> e(3);
 	BigFloat<> f = -a;
 
-	printBits(c / b);
-	printBits(a / e);
-	printBits(a / b); 
-	printBits(c / c);
-	printBits(f / d);
-	printBits(c / f);
 
-	const int LEN = 20;
+	const int LEN = 10;
 	char numbers[5][LEN];
 	a.toString(numbers[0], LEN);
-	b.toString(numbers[1], LEN);
+	/*b.toString(numbers[1], LEN);
 	c.toString(numbers[2], LEN);
 	d.toString(numbers[3], LEN);
-	e.toString(numbers[4], LEN);
+	e.toString(numbers[4], LEN);*/
 	printf("%s, %f\n", numbers[0], a.toDouble());
-	printf("%s, %f\n", numbers[1], b.toDouble());
+	/*printf("%s, %f\n", numbers[1], b.toDouble());
 	printf("%s, %f\n", numbers[2], c.toDouble());
 	printf("%s, %f\n", numbers[3], d.toDouble());
 	printf("%s, %f\n", numbers[4], e.toDouble());
-
+	*/
 	//printf("\nresults: %f, %f ; %f, %f\n\n", (a - b).toDouble(), (b - a).toDouble(), (-b - -a).toDouble(), (-a - -b).toDouble());  // correct
 
 	//printf("\nresults: %f, %f\n", (a * b).toDouble(), (b * a).toDouble());
